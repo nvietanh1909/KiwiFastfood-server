@@ -11,10 +11,8 @@ const PORT = process.env.PORT || 5000;
 // Middleware cors
 app.use(cors());
 
-// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Connect to MongoDB
 connectDB();
 
 // Default route
