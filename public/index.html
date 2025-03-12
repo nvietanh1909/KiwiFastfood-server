@@ -3,378 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiwi FastFood Server - Hệ thống quản lý thông minh</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="./css/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>API Documentation</title>
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/api.png">
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="main-nav">
+        <div class="container">
+            <div class="nav-container">
+                <div class="logo">
+                    <i class="fas fa-server"></i>
+                    <span>API Dashboard</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Section -->
     <header>
+        <div class="animated-bg">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
         <div class="container">
             <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-utensils"></i>
-                    <span>Kiwi FastFood Server</span>
-                </div>
-                <div class="header-right">
-                    <div class="status">
-                        <div class="indicator"></div>
-                        <span>Đang hoạt động</span>
-                    </div>
+                <h1>Tổng quan hệ thống</h1>
+                <p>Thông tin chi tiết về API và các endpoint. Khám phá các phương thức và cách sử dụng.</p>
+                <div class="header-buttons">
+                    <a href="#api-endpoints" class="btn btn-primary">Xem API Endpoints</a>
+                    <a href="https://github.com/nvietanh1909/KiwiFastfood-server" target="_blank" class="btn btn-secondary"><i class="fab fa-github"></i> GitHub</a>
                 </div>
             </div>
         </div>
     </header>
     
-    <section class="hero">
-        <div class="container">
-            <h1>Hệ thống quản lý đặt đồ ăn nhanh thông minh</h1>
-            <p>Nền tảng API mạnh mẽ để tích hợp và quản lý dữ liệu đặt hàng, xử lý giao dịch và phân tích thông tin.</p>
-            
-            <div class="server-meta">
-                <div class="meta-item">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Trạng thái: Hoạt động</span>
+    <div class="container">
+        <!-- API Overview -->
+        <section class="overview-section">
+            <div class="overview-card">
+                <div class="overview-icon">
+                    <i class="fas fa-server"></i>
                 </div>
-                <div class="meta-item">
+                <h3>Trạng thái Server</h3>
+                <p>Hoạt động</p>
+            </div>
+            <div class="overview-card">
+                <div class="overview-icon">
                     <i class="fas fa-plug"></i>
-                    <span>Cổng: <span id="port-value">5000</span></span>
                 </div>
-                <div class="meta-item">
+                <h3>Cổng kết nối</h3>
+                <p>5000</p>
+            </div>
+            <div class="overview-card">
+                <div class="overview-icon">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                <h3>Môi trường</h3>
+                <p>Production</p>
+            </div>
+            <div class="overview-card">
+                <div class="overview-icon">
                     <i class="fas fa-database"></i>
-                    <span>MongoDB: Đã kết nối</span>
+                </div>
+                <h3>Cơ sở dữ liệu</h3>
+                <p>MongoDB</p>
+            </div>
+        </section>
+
+        <!-- API Endpoints Section -->
+        <section id="api-endpoints" class="api-section">
+            <div class="section-header">
+                <i class="fas fa-code"></i>
+                <h2>API Endpoints</h2>
+            </div>
+            
+            <div class="api-card">
+                <div class="api-header" onclick="toggleDetails(this)">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/users</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="api-details">
+                    <div class="details-content">
+                        <h4>Mô tả</h4>
+                        <p>Quản lý người dùng, xác thực, đăng nhập và đăng ký tài khoản</p>
+                        <h4>Xác thực</h4>
+                        <p>Cần Token Bearer</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
-    
-    <main>
-        <div class="container">
-            <section class="server-status">
-                <div class="status-content">
-                    <div class="status-left">
-                        <h3>
-                            Trạng thái hệ thống
-                            <span class="status-badge">
-                                <span class="dot"></span>
-                                Đang hoạt động
-                            </span>
-                        </h3>
-                        <p class="status-text">Hệ thống Kiwi FastFood Server đang hoạt động tối ưu và sẵn sàng phục vụ. Tất cả các dịch vụ và API endpoints đều đang hoạt động bình thường.</p>
-                        
-                        <div class="status-metrics">
-                            <div class="metric">
-                                <span class="metric-title">API Rate</span>
-                                <span class="metric-value">99.8%</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-title">Response</span>
-                                <span class="metric-value">185ms</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-title">Môi trường</span>
-                                <span class="metric-value" id="env-value">Development</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="status-right">
-                        <div class="server-time-title">Thời gian máy chủ</div>
-                        <div class="current-time" id="current-time">Loading...</div>
-                        
-                        <div class="uptime">
-                            <div class="uptime-label">Uptime</div>
-                            <div class="uptime-bar">
-                                <div class="uptime-progress"></div>
-                            </div>
-                            <div class="uptime-value">99.8%</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
             
-            <section class="dashboard">
-                <div class="section-title">
-                    <i class="fas fa-chart-line"></i>
-                    <h2>Tổng quan hệ thống</h2>
-                    <span class="line"></span>
+            <div class="api-card">
+                <div class="api-header" onclick="toggleDetails(this)">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/products</span>
+                    <i class="fas fa-chevron-down"></i>
                 </div>
-                
-                <div class="stats">
-                    <div class="stat-card">
-                        <div class="icon">
-                            <i class="fas fa-server"></i>
-                        </div>
-                        <h3>Trạng thái Server</h3>
-                        <div class="value">Hoạt động</div>
-                        <div class="stat-footer">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Tất cả dịch vụ đang hoạt động</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="icon">
-                            <i class="fas fa-plug"></i>
-                        </div>
-                        <h3>Cổng kết nối</h3>
-                        <div class="value" id="port-display">5000</div>
-                        <div class="stat-footer">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Đang lắng nghe kết nối</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="icon">
-                            <i class="fas fa-network-wired"></i>
-                        </div>
-                        <h3>Môi trường</h3>
-                        <div class="value" id="env-display">Development</div>
-                        <div class="stat-footer">
-                            <i class="fas fa-info-circle"></i>
-                            <span>Cấu hình từ .env</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="icon">
-                            <i class="fas fa-database"></i>
-                        </div>
-                        <h3>Cơ sở dữ liệu</h3>
-                        <div class="value">MongoDB</div>
-                        <div class="stat-footer">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Kết nối thành công</span>
-                        </div>
+                <div class="api-details">
+                    <div class="details-content">
+                        <h4>Mô tả</h4>
+                        <p>Lấy danh sách tất cả sản phẩm</p>
                     </div>
                 </div>
-            </section>
+            </div>
             
-            <section class="api-section">
-                <div class="section-title">
-                    <i class="fas fa-code"></i>
-                    <h2>API Endpoints</h2>
-                    <span class="line"></span>
+            <div class="api-card">
+                <div class="api-header" onclick="toggleDetails(this)">
+                    <span class="method post">POST</span>
+                    <span class="endpoint">/api/products</span>
+                    <i class="fas fa-chevron-down"></i>
                 </div>
-                
-                <div class="endpoints">
-                    <div class="endpoint">
-                        <div class="endpoint-left">
-                            <div class="endpoint-path">
-                                <i class="fas fa-user"></i>
-                                /api/users
-                            </div>
-                            <p class="endpoint-description">Quản lý người dùng, xác thực, đăng nhập và đăng ký tài khoản</p>
-                        </div>
-                        <span class="method get">
-                            <i class="fas fa-arrow-down"></i>
-                            GET
-                        </span>
-                    </div>
-                    <div class="endpoint">
-                        <div class="endpoint-left">
-                            <div class="endpoint-path">
-                                <i class="fas fa-exchange-alt"></i>
-                                /api/orders
-                            </div>
-                            <p class="endpoint-description">Quản lý đơn hàng, tạo đơn, theo dõi trạng thái và cập nhật đơn hàng</p>
-                        </div>
-                        <span class="method post">
-                            <i class="fas fa-arrow-up"></i>
-                            POST
-                        </span>
-                    </div>
-                    <div class="endpoint">
-                        <div class="endpoint-left">
-                            <div class="endpoint-path">
-                                <i class="fas fa-utensils"></i>
-                                /api/products
-                            </div>
-                            <p class="endpoint-description">Quản lý sản phẩm, thông tin chi tiết, giá cả và tồn kho</p>
-                        </div>
-                        <span class="method get">
-                            <i class="fas fa-arrow-down"></i>
-                            GET
-                        </span>
-                    </div>
-                    <div class="endpoint">
-                        <div class="endpoint-left">
-                            <div class="endpoint-path">
-                                <i class="fas fa-tags"></i>
-                                /api/categories
-                            </div>
-                            <p class="endpoint-description">Quản lý danh mục sản phẩm, phân loại và nhóm sản phẩm</p>
-                        </div>
-                        <span class="method get">
-                            <i class="fas fa-arrow-down"></i>
-                            GET
-                        </span>
-                    </div>
-                    <div class="endpoint">
-                        <div class="endpoint-left">
-                            <div class="endpoint-path">
-                                <i class="fas fa-shopping-cart"></i>
-                                /api/cart
-                            </div>
-                            <p class="endpoint-description">Quản lý giỏ hàng, thêm, xóa và cập nhật sản phẩm trong giỏ</p>
-                        </div>
-                        <span class="method post">
-                            <i class="fas fa-arrow-up"></i>
-                            POST
-                        </span>
-                    </div>
-                    <div class="endpoint">
-                        <div class="endpoint-left">
-                            <div class="endpoint-path">
-                                <i class="fas fa-key"></i>
-                                /api/auth
-                            </div>
-                            <p class="endpoint-description">Xác thực và phân quyền, quản lý token JWT</p>
-                        </div>
-                        <span class="method post">
-                            <i class="fas fa-arrow-up"></i>
-                            POST
-                        </span>
-                    </div>
-                    <div class="endpoint">
-                        <div class="endpoint-left">
-                            <div class="endpoint-path">
-                                <i class="fas fa-star"></i>
-                                /api/reviews
-                            </div>
-                            <p class="endpoint-description">Đánh giá và phản hồi về sản phẩm, quản lý điểm đánh giá</p>
-                        </div>
-                        <span class="method post">
-                            <i class="fas fa-arrow-up"></i>
-                            POST
-                        </span>
-                    </div>
-                    <div class="endpoint">
-                        <div class="endpoint-left">
-                            <div class="endpoint-path">
-                                <i class="fas fa-chart-pie"></i>
-                                /api/analytics
-                            </div>
-                            <p class="endpoint-description">Thống kê và phân tích dữ liệu bán hàng, báo cáo doanh thu</p>
-                        </div>
-                        <span class="method get">
-                            <i class="fas fa-arrow-down"></i>
-                            GET
-                        </span>
-                    </div>
-                    <div class="endpoint">
-                        <div class="endpoint-left">
-                            <div class="endpoint-path">
-                                <i class="fa fa-credit-card"></i>
-                                /api/payments
-                            </div>
-                            <p class="endpoint-description">Tạo thanh toán và quản lý các phương thức thanh toán</p>
-                        </div>
-                        <span class="method post">
-                            <i class="fas fa-arrow-up"></i>
-                            POST
-                        </span>
+                <div class="api-details">
+                    <div class="details-content">
+                        <h4>Mô tả</h4>
+                        <p>Tạo sản phẩm mới</p>
+                        <h4>Xác thực</h4>
+                        <p>Yêu cầu quyền Admin</p>
                     </div>
                 </div>
-            </section>
-        </div>
-    </main>
+            </div>
+            
+            <div class="api-card">
+                <div class="api-header" onclick="toggleDetails(this)">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/categories</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="api-details">
+                    <div class="details-content">
+                        <h4>Mô tả</h4>
+                        <p>Lấy danh sách tất cả danh mục</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="api-card">
+                <div class="api-header" onclick="toggleDetails(this)">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/orders</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="api-details">
+                    <div class="details-content">
+                        <h4>Mô tả</h4>
+                        <p>Lấy tất cả đơn hàng của người dùng</p>
+                        <h4>Xác thực</h4>
+                        <p>Cần Token Bearer</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Request Demo Section -->
+        <section class="demo-section">
+            <div class="demo-content">
+                <h2>Thử nghiệm API</h2>
+                <p>Kiểm tra các endpoint bằng cURL hoặc công cụ như Postman hoặc Insomnia</p>
+                <pre>curl -X GET https://api-example.com/api/products</pre>
+                <a target="_blank" href="https://www.postman.com/downloads/" class="btn btn-primary">Tải Postman Collection</a>
+            </div>
+        </section>
+    </div>
     
+    <!-- Footer -->
     <footer>
         <div class="container">
-            <div class="footer">
+            <div class="footer-content">
                 <div class="footer-logo">
-                    <i class="fas fa-utensils"></i>
-                    <div class="footer-logo-text">Kiwi FastFood Server</div>
+                    <i class="fas fa-server"></i>
+                    <span>API Dashboard</span>
                 </div>
-                <p class="footer-tagline">Nền tảng API đặt đồ ăn nhanh mạnh mẽ, được thiết kế để hỗ trợ quản lý đơn hàng thông minh và hiệu quả.</p>
-            </div>
-            
-            <div class="copyright">
-                <div>
-                    &copy; 2024 Kiwi FastFood Server. Tất cả các quyền được bảo lưu.
+                <div class="footer-links">
+                    <a href="#"><i class="fab fa-github"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fas fa-envelope"></i></a>
                 </div>
+                <p>©API Documentation. All rights reserved.</p>
             </div>
         </div>
     </footer>
     
-    <script>
-        // Hiển thị thời gian server hiện tại
-        function updateTime() {
-            const now = new Date();
-            const timeString = now.toLocaleString('vi-VN', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            document.getElementById('current-time').textContent = timeString;
-        }
-        
-        // Cập nhật thông tin PORT từ biến môi trường
-        const portValue = window.location.port || '5000';
-        document.getElementById('port-value').textContent = portValue;
-        document.getElementById('port-display').textContent = portValue;
-        
-        // Cập nhật môi trường dựa trên hostname
-        const hostname = window.location.hostname;
-        const envValue = (hostname === 'localhost' || hostname === '127.0.0.1') ? 'Development' : 'Production';
-        document.getElementById('env-value').textContent = envValue;
-        document.getElementById('env-display').textContent = envValue;
-        
-        // Cập nhật thời gian mỗi giây
-        updateTime();
-        setInterval(updateTime, 1000);
-        
-        // Hiệu ứng scroll cho các phần tử
-        function reveal() {
-            const reveals = document.querySelectorAll('.stat-card, .endpoint');
-            
-            for (let i = 0; i < reveals.length; i++) {
-                const windowHeight = window.innerHeight;
-                const elementTop = reveals[i].getBoundingClientRect().top;
-                const elementVisible = 150;
-                
-                if (elementTop < windowHeight - elementVisible) {
-                    reveals[i].classList.add('active');
-                }
-            }
-        }
-        
-        // Hiệu ứng hover cho endpoint
-        const endpoints = document.querySelectorAll('.endpoint');
-        endpoints.forEach(endpoint => {
-            endpoint.addEventListener('mouseenter', () => {
-                endpoint.classList.add('endpoint-hover');
-            });
-            endpoint.addEventListener('mouseleave', () => {
-                endpoint.classList.remove('endpoint-hover');
-            });
-        });
-        
-        // Hiệu ứng pulse cho indicator
-        function pulseEffect() {
-            const indicators = document.querySelectorAll('.indicator, .dot');
-            indicators.forEach(indicator => {
-                indicator.classList.add('pulse');
-                setTimeout(() => {
-                    indicator.classList.remove('pulse');
-                }, 1500);
-            });
-        }
-        
-        // Chạy pulse effect mỗi 3 giây
-        setInterval(pulseEffect, 3000);
-        
-        // Khởi chạy hiệu ứng khi tải trang
-        window.addEventListener('scroll', reveal);
-        window.addEventListener('load', () => {
-            reveal();
-            pulseEffect();
-        });
-    </script>
+    <!-- Custom JavaScript -->
+    <script src="js/scripts.js"></script>
 </body>
 </html> 
