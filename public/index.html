@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/api.png">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="main-nav">
+        <div class="container">
+            <div class="nav-container">
+                <div class="logo">
+                    <i class="fas fa-server"></i>
+                    <span>API Dashboard</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Section -->
+    <header>
+        <div class="animated-bg">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="container">
+            <div class="header-content">
+                <h1>Tổng quan hệ thống</h1>
+                <p>Thông tin chi tiết về API và các endpoint. Khám phá các phương thức và cách sử dụng.</p>
+                <div class="header-buttons">
+                    <a href="#api-endpoints" class="btn btn-primary">Xem API Endpoints</a>
+                    <a href="https://github.com/nvietanh1909/KiwiFastfood-server" target="_blank" class="btn btn-secondary"><i class="fab fa-github"></i> GitHub</a>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- API Overview -->
+        <section class="overview-section">
+            <div class="overview-card">
+                <div class="overview-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <h3>Trạng thái Server</h3>
+                <p>Hoạt động</p>
+            </div>
+            <div class="overview-card">
+                <div class="overview-icon">
+                    <i class="fas fa-plug"></i>
+                </div>
+                <h3>Cổng kết nối</h3>
+                <p>5000</p>
+            </div>
+            <div class="overview-card">
+                <div class="overview-icon">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                <h3>Môi trường</h3>
+                <p>Production</p>
+            </div>
+            <div class="overview-card">
+                <div class="overview-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <h3>Cơ sở dữ liệu</h3>
+                <p>MongoDB</p>
+            </div>
+        </section>
+
+        <!-- API Endpoints Section -->
+        <section id="api-endpoints" class="api-section">
+            <div class="section-header">
+                <i class="fas fa-code"></i>
+                <h2>API Endpoints</h2>
+            </div>
+            
+            <div class="api-card">
+                <div class="api-header" onclick="toggleDetails(this)">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/users</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="api-details">
+                    <div class="details-content">
+                        <h4>Mô tả</h4>
+                        <p>Quản lý người dùng, xác thực, đăng nhập và đăng ký tài khoản</p>
+                        <h4>Xác thực</h4>
+                        <p>Cần Token Bearer</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="api-card">
+                <div class="api-header" onclick="toggleDetails(this)">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/products</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="api-details">
+                    <div class="details-content">
+                        <h4>Mô tả</h4>
+                        <p>Lấy danh sách tất cả sản phẩm</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="api-card">
+                <div class="api-header" onclick="toggleDetails(this)">
+                    <span class="method post">POST</span>
+                    <span class="endpoint">/api/products</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="api-details">
+                    <div class="details-content">
+                        <h4>Mô tả</h4>
+                        <p>Tạo sản phẩm mới</p>
+                        <h4>Xác thực</h4>
+                        <p>Yêu cầu quyền Admin</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="api-card">
+                <div class="api-header" onclick="toggleDetails(this)">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/categories</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="api-details">
+                    <div class="details-content">
+                        <h4>Mô tả</h4>
+                        <p>Lấy danh sách tất cả danh mục</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="api-card">
+                <div class="api-header" onclick="toggleDetails(this)">
+                    <span class="method get">GET</span>
+                    <span class="endpoint">/api/orders</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="api-details">
+                    <div class="details-content">
+                        <h4>Mô tả</h4>
+                        <p>Lấy tất cả đơn hàng của người dùng</p>
+                        <h4>Xác thực</h4>
+                        <p>Cần Token Bearer</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Request Demo Section -->
+        <section class="demo-section">
+            <div class="demo-content">
+                <h2>Thử nghiệm API</h2>
+                <p>Kiểm tra các endpoint bằng cURL hoặc công cụ như Postman hoặc Insomnia</p>
+                <pre>curl -X GET https://api-example.com/api/products</pre>
+                <a target="_blank" href="https://www.postman.com/downloads/" class="btn btn-primary">Tải Postman Collection</a>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <i class="fas fa-server"></i>
+                    <span>API Dashboard</span>
+                </div>
+                <div class="footer-links">
+                    <a href="#"><i class="fab fa-github"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fas fa-envelope"></i></a>
+                </div>
+                <p>©API Documentation. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Custom JavaScript -->
+    <script src="js/scripts.js"></script>
+</body>
+</html> 
