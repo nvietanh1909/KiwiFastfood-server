@@ -4,6 +4,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const database = require('./config/db');
 const { errorHandler } = require('./middleware/errorHandler');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -14,6 +15,7 @@ const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const cartRoutes = require('./routes/cartRoutes');
 
 // Initialize Express
 const app = express();
@@ -24,6 +26,9 @@ database.connect();
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Logging middleware in development
 if (process.env.NODE_ENV === 'development') {
@@ -36,13 +41,20 @@ app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/cart', cartRoutes);
 
-// Base route
+// Base route - Render documentation
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// API info route
+app.get('/api', (req, res) => {
   res.json({
     success: true,
     message: 'Kiwi FastFood API is running',
     version: '1.0.0',
+    documentation: '/'
   });
 });
 
