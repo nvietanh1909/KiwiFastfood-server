@@ -1,189 +1,196 @@
-const OrderRepository = require('../repositories/OrderRepository');
-const ProductRepository = require('../repositories/ProductRepository');
-const CartRepository = require('../repositories/CartRepository');
-const UserRepository = require('../repositories/UserRepository');
 const { ErrorResponse } = require('../middleware/errorHandler');
+const { ValidationContext, strategies } = require('../utils/validationStrategies');
+const { eventManager, LoggingObserver } = require('../utils/observer');
 
 /**
  * Service class for Order-related business logic
- * Implements the Service Pattern
+ * Implements the Service Pattern with Observer Pattern for notifications
  */
 class OrderService {
   /**
+   * Create a new OrderService
+   * @param {OrderRepository} orderRepository - The order repository instance
+   * @param {ProductRepository} productRepository - The product repository instance
+   * @param {UserRepository} userRepository - The user repository instance
+   */
+  constructor(orderRepository, productRepository, userRepository) {
+    this.orderRepository = orderRepository;
+    this.productRepository = productRepository;
+    this.userRepository = userRepository;
+    this.validator = new ValidationContext(strategies.order);
+    
+    // Đăng ký observer cho log
+    this.setupEventListeners();
+  }
+
+  /**
+   * Thiết lập các event listeners
+   */
+  setupEventListeners() {
+    // Observer để ghi log
+    const loggingObserver = new LoggingObserver();
+    
+    // Đăng ký observer cho các events
+    eventManager.subscribe('order.created', loggingObserver);
+    eventManager.subscribe('order.updated', loggingObserver);
+    eventManager.subscribe('order.statusChanged', loggingObserver);
+  }
+
+  /**
    * Create a new order
    * @param {string} userId - User ID
-   * @param {Array} items - Order items array
-   * @returns {Object} Created order with details
+   * @param {Object} orderData - Order data
+   * @returns {Object} Created order
    */
-  async createOrder(userId, items) {
+  async createOrder(userId, orderData) {
+    // Validate input data
+    this.validator.setStrategy(strategies.order);
+    const { error } = this.validator.validate(orderData);
+    if (error) {
+      throw new ErrorResponse(error.details[0].message, 400);
+    }
+
     // Check if user exists
-    const user = await UserRepository.findById(userId);
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new ErrorResponse('Không tìm thấy người dùng', 404);
     }
 
-    // Validate items
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      throw new ErrorResponse('Đơn hàng phải có ít nhất một sản phẩm', 400);
+    // Calculate total and validate items
+    let tongTien = 0;
+    const orderItems = [];
+
+    for (const item of orderData.items) {
+      const product = await this.productRepository.findById(item.maMon);
+      if (!product) {
+        throw new ErrorResponse(`Sản phẩm với ID ${item.maMon} không tồn tại`, 404);
+      }
+
+      if (item.soLuong > product.soLuongTon) {
+        throw new ErrorResponse(`Sản phẩm ${product.tenMon} chỉ còn ${product.soLuongTon} sản phẩm`, 400);
+      }
+
+      const thanhTien = product.giaBan * item.soLuong;
+      tongTien += thanhTien;
+
+      orderItems.push({
+        maMon: product._id,
+        tenMon: product.tenMon,
+        soLuong: item.soLuong,
+        giaBan: product.giaBan,
+        thanhTien,
+      });
+
+      // Update product quantity
+      await this.productRepository.update(product._id, {
+        soLuongTon: product.soLuongTon - item.soLuong,
+      });
     }
 
     // Create order
-    const order = await OrderRepository.create({
+    const order = await this.orderRepository.create({
       maKH: userId,
-      ngayDat: new Date(),
+      hoTen: user.hoTen,
+      dienThoaiKH: user.dienThoaiKH,
+      diaChiKH: user.diaChiKH,
+      items: orderItems,
+      tongTien,
+      tinhTrangGiaoHang: false,
       daThanhToan: false,
-      tinhTrangGiaoHang: false
     });
-    
-    // Prepare order details and check product availability
-    const orderDetailsData = [];
-    
-    for (const item of items) {
-      const product = await ProductRepository.findById(item.maMon);
-      
-      if (!product) {
-        throw new ErrorResponse(`Không tìm thấy sản phẩm với ID: ${item.maMon}`, 404);
-      }
-      
-      if (product.soLuongTon < item.soLuong) {
-        throw new ErrorResponse(`Sản phẩm ${product.tenMon} không đủ số lượng trong kho`, 400);
-      }
-      
-      // Add to order details
-      orderDetailsData.push({
-        maDonHang: order._id,
-        maMon: product._id,
-        soLuong: item.soLuong,
-        donGia: product.giaBan
-      });
-      
-      // Update product stock
-      await ProductRepository.update(product._id, {
-        soLuongTon: product.soLuongTon - item.soLuong
-      });
-    }
-    
-    // Create order details
-    await OrderRepository.createOrderDetails(orderDetailsData);
-    
-    // Clear the cart (if using cart)
-    try {
-      await CartRepository.clearCart(userId);
-    } catch (error) {
-      // Ignore if cart not found
-    }
-    
-    // Return order with details
-    const orderDetails = await OrderRepository.getOrderDetails(order._id);
-    
-    return {
-      order,
-      orderDetails
-    };
-  }
 
-  /**
-   * Get order by ID
-   * @param {string} orderId - Order ID
-   * @param {string} userId - User ID for verification
-   * @param {boolean} isAdmin - Whether the requester is an admin
-   * @returns {Object} Order with details
-   */
-  async getOrderById(orderId, userId, isAdmin = false) {
-    let order;
-    
-    if (isAdmin) {
-      // Admins can see any order
-      order = await OrderRepository.findById(orderId);
-    } else {
-      // Regular users can only see their own orders
-      order = await OrderRepository.findByIdForUser(orderId, userId);
-    }
-    
-    if (!order) {
-      throw new ErrorResponse('Không tìm thấy đơn hàng', 404);
-    }
-    
-    // Get order details
-    const orderDetails = await OrderRepository.getOrderDetails(orderId);
-    
-    return {
-      order,
-      orderDetails
-    };
+    // Thông báo order đã được tạo
+    eventManager.notify('order.created', {
+      orderId: order._id,
+      userId: userId,
+      totalAmount: tongTien,
+      items: orderItems.length
+    });
+
+    return order;
   }
 
   /**
    * Get all orders for a user
    * @param {string} userId - User ID
-   * @param {number} page - Page number
-   * @param {number} limit - Results per page
-   * @returns {Object} Orders and pagination data
+   * @returns {Array} User orders
    */
-  async getUserOrders(userId, page = 1, limit = 10) {
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-    
-    // Get orders
-    const orders = await OrderRepository.getAllForUser(userId, limit, skip);
-    
-    // Get total count
-    const total = await OrderRepository.count({ maKH: userId });
-    
-    return {
-      orders,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    };
+  async getUserOrders(userId) {
+    return await this.orderRepository.findByUserId(userId);
+  }
+
+  /**
+   * Get an order by ID
+   * @param {string} orderId - Order ID
+   * @param {string} userId - User ID (optional, for user-specific access)
+   * @returns {Object} Order details
+   */
+  async getOrderById(orderId, userId = null) {
+    const order = await this.orderRepository.findById(orderId);
+    if (!order) {
+      throw new ErrorResponse('Không tìm thấy đơn hàng', 404);
+    }
+
+    // If userId is provided, check if order belongs to user
+    if (userId && order.maKH.toString() !== userId) {
+      throw new ErrorResponse('Không có quyền truy cập đơn hàng này', 403);
+    }
+
+    return order;
   }
 
   /**
    * Update order status (admin only)
    * @param {string} orderId - Order ID
-   * @param {boolean} tinhTrangGiaoHang - New delivery status
-   * @param {boolean} daThanhToan - New payment status
+   * @param {Object} statusData - Status data
    * @returns {Object} Updated order
    */
-  async updateOrderStatus(orderId, tinhTrangGiaoHang, daThanhToan) {
-    // Check if order exists
-    const order = await OrderRepository.findById(orderId);
+  async updateOrderStatus(orderId, statusData) {
+    // Validate status data
+    this.validator.setStrategy(strategies.orderStatus);
+    const { error } = this.validator.validate(statusData);
+    if (error) {
+      throw new ErrorResponse(error.details[0].message, 400);
+    }
+
+    // Find order
+    const order = await this.orderRepository.findById(orderId);
     if (!order) {
       throw new ErrorResponse('Không tìm thấy đơn hàng', 404);
     }
-    
+
     // Update order status
-    const updatedOrder = await OrderRepository.updateStatus(orderId, tinhTrangGiaoHang, daThanhToan);
-    
-    // Get order details
-    const orderDetails = await OrderRepository.getOrderDetails(orderId);
-    
-    return {
-      order: updatedOrder,
-      orderDetails
-    };
+    const updatedOrder = await this.orderRepository.update(orderId, statusData);
+
+    // Thông báo status đã được cập nhật
+    eventManager.notify('order.statusChanged', {
+      orderId: order._id,
+      userId: order.maKH,
+      previousStatus: {
+        delivered: order.tinhTrangGiaoHang,
+        paid: order.daThanhToan
+      },
+      newStatus: {
+        delivered: statusData.tinhTrangGiaoHang !== undefined ? statusData.tinhTrangGiaoHang : order.tinhTrangGiaoHang,
+        paid: statusData.daThanhToan !== undefined ? statusData.daThanhToan : order.daThanhToan
+      }
+    });
+
+    return updatedOrder;
   }
 
   /**
-   * Get all orders (admin)
-   * @param {Object} filters - Filter criteria
+   * Get all orders (admin only)
    * @param {number} page - Page number
-   * @param {number} limit - Results per page
-   * @returns {Object} Orders and pagination data
+   * @param {number} limit - Items per page
+   * @param {Object} filter - Filter criteria
+   * @returns {Object} Orders with pagination
    */
-  async getAllOrders(filters = {}, page = 1, limit = 20) {
-    // Calculate pagination
+  async getAllOrders(page = 1, limit = 10, filter = {}) {
     const skip = (page - 1) * limit;
-    
-    // Get orders
-    const orders = await OrderRepository.getAll(filters, limit, skip);
-    
-    // Get total count
-    const total = await OrderRepository.count(filters);
-    
+    const orders = await this.orderRepository.getAll(filter, limit, skip);
+    const total = await this.orderRepository.count(filter);
+
     return {
       orders,
       pagination: {
@@ -194,6 +201,44 @@ class OrderService {
       },
     };
   }
+
+  /**
+   * Cancel an order (only if not delivered and not paid)
+   * @param {string} orderId - Order ID
+   * @param {string} userId - User ID
+   * @returns {Object} Cancelled order
+   */
+  async cancelOrder(orderId, userId) {
+    // Find order
+    const order = await this.getOrderById(orderId, userId);
+    
+    // Check if order can be cancelled
+    if (order.tinhTrangGiaoHang || order.daThanhToan) {
+      throw new ErrorResponse('Không thể hủy đơn hàng đã thanh toán hoặc đã giao', 400);
+    }
+    
+    // Return items to inventory
+    for (const item of order.items) {
+      const product = await this.productRepository.findById(item.maMon);
+      if (product) {
+        await this.productRepository.update(product._id, {
+          soLuongTon: product.soLuongTon + item.soLuong,
+        });
+      }
+    }
+    
+    // Delete order
+    await this.orderRepository.delete(orderId);
+    
+    // Thông báo order đã bị hủy
+    eventManager.notify('order.cancelled', {
+      orderId: order._id,
+      userId: userId,
+      items: order.items
+    });
+    
+    return { message: 'Đơn hàng đã được hủy thành công' };
+  }
 }
 
-module.exports = new OrderService(); 
+module.exports = OrderService; 

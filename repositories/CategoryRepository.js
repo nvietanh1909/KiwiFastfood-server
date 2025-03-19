@@ -1,10 +1,37 @@
 const Category = require('../models/Category');
+const BaseRepository = require('./BaseRepository');
 
 /**
  * Repository class for Category data operations
- * Implements the Repository Pattern
+ * Implements the Repository Pattern and extends BaseRepository
  */
-class CategoryRepository {
+class CategoryRepository extends BaseRepository {
+  /**
+   * Constructor
+   */
+  constructor() {
+    super(Category);
+  }
+
+  /**
+   * Find a category by name
+   * @param {string} tenLoai - Category name
+   * @returns {Promise<Category>} Category document
+   */
+  async findByName(tenLoai) {
+    return await this.model.findOne({ tenLoai: tenLoai });
+  }
+
+  /**
+   * Hook to execute before create operation
+   * @param {Object} data - Category data
+   * @returns {Object} Processed category data
+   */
+  beforeCreate(data) {
+    // Nếu có chuyển đổi dữ liệu trước khi tạo ở đây
+    return data;
+  }
+
   /**
    * Create a new category
    * @param {Object} categoryData - Category data
@@ -62,4 +89,5 @@ class CategoryRepository {
   }
 }
 
-module.exports = new CategoryRepository(); 
+// Export class
+module.exports = CategoryRepository; 

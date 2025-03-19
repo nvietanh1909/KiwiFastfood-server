@@ -16,7 +16,6 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const cartRoutes = require('./routes/cartRoutes');
-const testRoutes = require('./routes/testRoutes');
 
 // Initialize Express
 const app = express();
