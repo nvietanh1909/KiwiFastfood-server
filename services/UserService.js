@@ -1,6 +1,5 @@
-const UserRepository = require('../repositories/UserRepository');
 const { ErrorResponse } = require('../middleware/errorHandler');
-const Validator = require('../utils/validator');
+const { ValidationContext, strategies } = require('../utils/validationStrategies');
 
 /**
  * Service class for User-related business logic
@@ -8,31 +7,41 @@ const Validator = require('../utils/validator');
  */
 class UserService {
   /**
+   * Create a new UserService
+   * @param {UserRepository} userRepository - The user repository instance
+   */
+  constructor(userRepository) {
+    this.userRepository = userRepository;
+    this.validator = new ValidationContext(strategies.userRegistration);
+  }
+
+  /**
    * Register a new user
    * @param {Object} userData - User registration data
    * @returns {Object} User data and JWT token
    */
   async register(userData) {
-    // Validate input data
-    const { error } = Validator.validateUserRegistration(userData);
+    // Validate input data using Strategy Pattern
+    this.validator.setStrategy(strategies.userRegistration);
+    const { error } = this.validator.validate(userData);
     if (error) {
       throw new ErrorResponse(error.details[0].message, 400);
     }
 
     // Check if user already exists with the same taiKhoan
-    const existingUserByUsername = await UserRepository.findByUsername(userData.taiKhoan);
+    const existingUserByUsername = await this.userRepository.findByUsername(userData.taiKhoan);
     if (existingUserByUsername) {
       throw new ErrorResponse('Tài khoản đã được sử dụng', 400);
     }
 
     // Check if user already exists with the same email
-    const existingUserByEmail = await UserRepository.findByEmail(userData.email);
+    const existingUserByEmail = await this.userRepository.findByEmail(userData.email);
     if (existingUserByEmail) {
       throw new ErrorResponse('Email đã được sử dụng', 400);
     }
 
     // Create new user
-    const user = await UserRepository.create(userData);
+    const user = await this.userRepository.create(userData);
 
     // Generate JWT token
     const token = user.getSignedJwtToken();
@@ -56,17 +65,19 @@ class UserService {
    * @returns {Object} User data and JWT token
    */
   async login(taiKhoan, matKhau) {
-    // Validate input data
-    if (!taiKhoan || !matKhau) {
-      throw new ErrorResponse('Vui lòng nhập tài khoản và mật khẩu', 400);
+    // Validate input data using Strategy Pattern
+    this.validator.setStrategy(strategies.userLogin);
+    const { error } = this.validator.validate({ taiKhoan, matKhau });
+    if (error) {
+      throw new ErrorResponse(error.details[0].message, 400);
     }
 
     // Check if user exists by username
-    let user = await UserRepository.findByUsername(taiKhoan, true);
+    let user = await this.userRepository.findByUsername(taiKhoan, true);
     
     // If not found by username, try email
     if (!user) {
-      user = await UserRepository.findByEmail(taiKhoan, true);
+      user = await this.userRepository.findByEmail(taiKhoan, true);
     }
     
     // If still not found, return error
@@ -101,7 +112,7 @@ class UserService {
    * @returns {Object} User profile data
    */
   async getUserProfile(userId) {
-    const user = await UserRepository.findById(userId);
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new ErrorResponse('Không tìm thấy người dùng', 404);
     }
@@ -132,7 +143,7 @@ class UserService {
     }
 
     // Find and update the user
-    const user = await UserRepository.update(userId, updateData);
+    const user = await this.userRepository.update(userId, updateData);
     if (!user) {
       throw new ErrorResponse('Không tìm thấy người dùng', 404);
     }
@@ -158,7 +169,7 @@ class UserService {
    */
   async changePassword(userId, currentPassword, newPassword) {
     // Get user with password
-    const user = await UserRepository.findById(userId).select('+matKhau');
+    const user = await this.userRepository.findById(userId).select('+matKhau');
     if (!user) {
       throw new ErrorResponse('Không tìm thấy người dùng', 404);
     }
@@ -194,10 +205,10 @@ class UserService {
     const skip = (page - 1) * limit;
     
     // Get users
-    const users = await UserRepository.getAll({}, limit, skip);
+    const users = await this.userRepository.getAll({}, limit, skip);
     
     // Get total count
-    const total = await UserRepository.count();
+    const total = await this.userRepository.count();
     
     return {
       users: users.map(user => ({
@@ -221,4 +232,5 @@ class UserService {
   }
 }
 
-module.exports = new UserService(); 
+// Export the class instead of a singleton instance
+module.exports = UserService; 

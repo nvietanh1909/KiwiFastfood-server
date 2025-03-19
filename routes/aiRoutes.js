@@ -74,7 +74,6 @@ router.post('/recommend', asyncHandler(async (req, res) => {
         
         // Create a context for menu recommendations
         const prompt = `Bạn là chuyên gia tư vấn thực đơn cho Kiwi Fastfood. Dựa trên sở thích của khách hàng, hãy đề xuất 3 món ăn phù hợp nhất từ thực đơn. Thực đơn có burger, pizza, món tráng miệng và đồ uống. Đề xuất nên có tên món, mô tả ngắn và giá. Trả lời bằng định dạng danh sách và tiếng Việt.
-
 Sở thích của khách hàng: ${preferences}
 Đề xuất:`;
         

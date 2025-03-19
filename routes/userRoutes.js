@@ -1,9 +1,11 @@
 const express = require('express');
-const UserService = require('../services/UserService');
 const { protect } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
+const container = require('../config/dependencyContainer');
 
 const router = express.Router();
+// Lấy UserService từ container thay vì import trực tiếp
+const userService = container.resolve('userService');
 
 /**
  * @route   POST /api/users/register
@@ -12,7 +14,7 @@ const router = express.Router();
  */
 router.post('/register', async (req, res) => {
   try {
-    const result = await UserService.register(req.body);
+    const result = await userService.register(req.body);
     res.status(201).json({
       success: true,
       data: result,
@@ -30,7 +32,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { taiKhoan, matKhau } = req.body;
-    const result = await UserService.login(taiKhoan, matKhau);
+    const result = await userService.login(taiKhoan, matKhau);
     res.status(200).json({
       success: true,
       data: result,
@@ -47,7 +49,7 @@ router.post('/login', async (req, res) => {
  */
 router.get('/profile', protect, async (req, res) => {
   try {
-    const result = await UserService.getUserProfile(req.user.id);
+    const result = await userService.getUserProfile(req.user.id);
     res.status(200).json({
       success: true,
       data: result,
@@ -64,7 +66,7 @@ router.get('/profile', protect, async (req, res) => {
  */
 router.put('/profile', protect, async (req, res) => {
   try {
-    const result = await UserService.updateProfile(req.user.id, req.body);
+    const result = await userService.updateProfile(req.user.id, req.body);
     res.status(200).json({
       success: true,
       data: result,
@@ -82,7 +84,7 @@ router.put('/profile', protect, async (req, res) => {
 router.put('/change-password', protect, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const result = await UserService.changePassword(req.user.id, currentPassword, newPassword);
+    const result = await userService.changePassword(req.user.id, currentPassword, newPassword);
     res.status(200).json({
       success: true,
       data: result,

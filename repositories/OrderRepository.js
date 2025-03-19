@@ -1,18 +1,26 @@
 const Order = require('../models/Order');
 const OrderDetail = require('../models/OrderDetail');
+const BaseRepository = require('./BaseRepository');
 
 /**
  * Repository class for Order data operations
- * Implements the Repository Pattern
+ * Implements the Repository Pattern and extends BaseRepository
  */
-class OrderRepository {
+class OrderRepository extends BaseRepository {
+  /**
+   * Constructor
+   */
+  constructor() {
+    super(Order);
+  }
+
   /**
    * Create a new order
    * @param {Object} orderData - Order data
    * @returns {Promise<Order>} Created order
    */
   async create(orderData) {
-    return await Order.create(orderData);
+    return await this.model.create(orderData);
   }
 
   /**
@@ -30,7 +38,7 @@ class OrderRepository {
    * @returns {Promise<Order>} Order document
    */
   async findById(id) {
-    return await Order.findById(id).populate('maKH', 'hoTen email dienThoaiKH diaChiKH');
+    return await this.model.findById(id).populate('maKH', 'hoTen email dienThoaiKH diaChiKH');
   }
 
   /**
@@ -43,13 +51,24 @@ class OrderRepository {
   }
 
   /**
+   * Find an order by user ID
+   * @param {string} userId - User ID
+   * @returns {Promise<Order[]>} User's orders
+   */
+  async findByUserId(userId) {
+    return await this.model.find({ maKH: userId })
+      .sort({ createdAt: -1 })
+      .populate('maKH', 'hoTen email dienThoaiKH diaChiKH');
+  }
+
+  /**
    * Find an order by ID with user check for security
    * @param {string} id - Order ID
    * @param {string} userId - User ID for verification
    * @returns {Promise<Order>} Order document
    */
   async findByIdForUser(id, userId) {
-    return await Order.findOne({
+    return await this.model.findOne({
       _id: id,
       maKH: userId
     }).populate('maKH', 'hoTen email dienThoaiKH diaChiKH');
@@ -58,30 +77,17 @@ class OrderRepository {
   /**
    * Update an order's status
    * @param {string} id - Order ID
-   * @param {boolean} tinhTrangGiaoHang - New delivery status
-   * @param {boolean} daThanhToan - New payment status
+   * @param {Object} statusData - Status data (tinhTrangGiaoHang, daThanhToan)
    * @returns {Promise<Order>} Updated order
    */
-  async updateStatus(id, tinhTrangGiaoHang, daThanhToan) {
-    const updateData = {};
+  async updateStatus(id, statusData) {
+    const updateData = { ...statusData };
     
-    if (tinhTrangGiaoHang !== undefined) {
-      updateData.tinhTrangGiaoHang = tinhTrangGiaoHang;
-    }
-    
-    if (daThanhToan !== undefined) {
-      updateData.daThanhToan = daThanhToan;
-    }
-    
-    if (tinhTrangGiaoHang === true) {
+    if (updateData.tinhTrangGiaoHang === true) {
       updateData.ngayGiao = Date.now();
     }
     
-    return await Order.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    ).populate('maKH', 'hoTen email dienThoaiKH diaChiKH');
+    return await this.update(id, updateData);
   }
 
   /**
@@ -92,8 +98,8 @@ class OrderRepository {
    * @returns {Promise<Order[]>} Array of orders
    */
   async getAllForUser(userId, limit = 10, skip = 0) {
-    return await Order.find({ maKH: userId })
-      .sort({ ngayDat: -1 })
+    return await this.model.find({ maKH: userId })
+      .sort({ createdAt: -1 })
       .limit(limit)
       .skip(skip)
       .populate('maKH', 'hoTen email dienThoaiKH diaChiKH');
@@ -107,39 +113,11 @@ class OrderRepository {
    * @returns {Promise<Order[]>} Array of orders
    */
   async getAll(filters = {}, limit = 20, skip = 0) {
-    const query = {};
+    const query = this.buildFilterQuery(filters);
     
-    // Apply delivery status filter if provided
-    if (filters.tinhTrangGiaoHang !== undefined) {
-      query.tinhTrangGiaoHang = filters.tinhTrangGiaoHang === 'true';
-    }
-    
-    // Apply payment status filter if provided
-    if (filters.daThanhToan !== undefined) {
-      query.daThanhToan = filters.daThanhToan === 'true';
-    }
-    
-    // Apply date range filter if provided
-    if (filters.startDate || filters.endDate) {
-      query.ngayDat = {};
-      
-      if (filters.startDate) {
-        query.ngayDat.$gte = new Date(filters.startDate);
-      }
-      
-      if (filters.endDate) {
-        query.ngayDat.$lte = new Date(filters.endDate);
-      }
-    }
-    
-    // Apply user filter if provided
-    if (filters.maKH) {
-      query.maKH = filters.maKH;
-    }
-    
-    return await Order.find(query)
+    return await this.model.find(query)
       .populate('maKH', 'hoTen email dienThoaiKH diaChiKH')
-      .sort({ ngayDat: -1 })
+      .sort({ createdAt: -1 })
       .limit(limit)
       .skip(skip);
   }
@@ -150,25 +128,35 @@ class OrderRepository {
    * @returns {Promise<number>} Total count
    */
   async count(filters = {}) {
+    const query = this.buildFilterQuery(filters);
+    return await this.model.countDocuments(query);
+  }
+
+  /**
+   * Build filter query from filter criteria
+   * @param {Object} filters - Filter criteria
+   * @returns {Object} MongoDB query object
+   */
+  buildFilterQuery(filters) {
     const query = {};
     
     if (filters.tinhTrangGiaoHang !== undefined) {
-      query.tinhTrangGiaoHang = filters.tinhTrangGiaoHang === 'true';
+      query.tinhTrangGiaoHang = filters.tinhTrangGiaoHang === 'true' || filters.tinhTrangGiaoHang === true;
     }
     
     if (filters.daThanhToan !== undefined) {
-      query.daThanhToan = filters.daThanhToan === 'true';
+      query.daThanhToan = filters.daThanhToan === 'true' || filters.daThanhToan === true;
     }
     
     if (filters.startDate || filters.endDate) {
-      query.ngayDat = {};
+      query.createdAt = {};
       
       if (filters.startDate) {
-        query.ngayDat.$gte = new Date(filters.startDate);
+        query.createdAt.$gte = new Date(filters.startDate);
       }
       
       if (filters.endDate) {
-        query.ngayDat.$lte = new Date(filters.endDate);
+        query.createdAt.$lte = new Date(filters.endDate);
       }
     }
     
@@ -176,21 +164,45 @@ class OrderRepository {
       query.maKH = filters.maKH;
     }
     
-    return await Order.countDocuments(query);
+    return query;
   }
 
   /**
-   * Delete an order (rarely used, mainly for admin cleanup)
+   * Delete an order
    * @param {string} id - Order ID
    * @returns {Promise<Order>} Deleted order
    */
   async delete(id) {
-    // Delete order details first
+    // Delete order details first if they exist
     await OrderDetail.deleteMany({ maDonHang: id });
     
-    // Then delete the order
-    return await Order.findByIdAndDelete(id);
+    // Then delete the order using the parent's method
+    return await super.delete(id);
+  }
+
+  /**
+   * Hook to execute before create operation
+   * @param {Object} data - Order data
+   * @returns {Object} Processed order data
+   */
+  beforeCreate(data) {
+    // Set createdAt if not present
+    if (!data.createdAt) {
+      data.createdAt = new Date();
+    }
+    return data;
+  }
+
+  /**
+   * Hook to execute after update operation
+   * @param {Object} entity - Updated entity
+   * @returns {Object} Processed entity
+   */
+  afterUpdate(entity) {
+    // Add any post-update processing here if needed
+    return entity;
   }
 }
 
-module.exports = new OrderRepository(); 
+// Export class instead of singleton instance
+module.exports = OrderRepository; 

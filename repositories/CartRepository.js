@@ -1,166 +1,143 @@
 const Cart = require('../models/Cart');
-const Product = require('../models/Product');
+const BaseRepository = require('./BaseRepository');
 
 /**
  * Repository class for Cart data operations
- * Implements the Repository Pattern
+ * Implements the Repository Pattern and extends BaseRepository
  */
-class CartRepository {
+class CartRepository extends BaseRepository {
   /**
-   * Get cart for a user, creating one if it doesn't exist
-   * @param {string} userId - User ID
-   * @returns {Promise<Cart>} User's cart
+   * Constructor
    */
-  async getCart(userId) {
-    let cart = await Cart.findOne({ user: userId, active: true });
-    
-    if (!cart) {
-      // Create new cart if none exists
-      cart = await Cart.create({
-        user: userId,
-        items: [],
-        totalPrice: 0,
-      });
-    }
-    
-    return cart;
+  constructor() {
+    super(Cart);
   }
 
   /**
-   * Add an item to a user's cart
+   * Find a cart by user ID
    * @param {string} userId - User ID
-   * @param {Object} itemData - Item data to add
+   * @returns {Promise<Cart>} Cart document
+   */
+  async findByUserId(userId) {
+    return await this.model.findOne({ userId }).populate('items.product');
+  }
+
+  /**
+   * Add a product to cart
+   * @param {string} userId - User ID
+   * @param {string} productId - Product ID
+   * @param {number} quantity - Quantity to add
    * @returns {Promise<Cart>} Updated cart
    */
-  async addItem(userId, itemData) {
-    // Get the cart (or create if doesn't exist)
-    const cart = await this.getCart(userId);
+  async addItem(userId, productId, quantity) {
+    let cart = await this.findByUserId(userId);
     
-    // Get the product to verify it exists and get current price
-    const product = await Product.findById(itemData.product);
-    if (!product) {
-      throw new Error('Product not found');
+    // If cart doesn't exist, create one
+    if (!cart) {
+      cart = await this.create({
+        userId,
+        items: [{ product: productId, quantity }],
+      });
+      return cart;
     }
     
-    // Check if product is in stock
-    if (!product.inStock) {
-      throw new Error('Product is out of stock');
-    }
-    
-    // Check if the item already exists in cart
-    const existingItemIndex = cart.items.findIndex(
-      item => item.product.toString() === itemData.product.toString()
+    // Check if product already in cart
+    const itemIndex = cart.items.findIndex(
+      (item) => item.product._id.toString() === productId
     );
     
-    if (existingItemIndex > -1) {
-      // Update quantity if item already in cart
-      cart.items[existingItemIndex].quantity += itemData.quantity || 1;
+    if (itemIndex !== -1) {
+      // Update quantity if product already in cart
+      cart.items[itemIndex].quantity += quantity;
     } else {
-      // Add new item to cart with current product info
-      cart.items.push({
-        product: product._id,
-        name: product.name,
-        quantity: itemData.quantity || 1,
-        price: product.price,
-        customizations: itemData.customizations || {},
-      });
+      // Add new product to cart
+      cart.items.push({ product: productId, quantity });
     }
     
-    // Save and return updated cart
-    await cart.save();
-    return cart;
+    // Calculate cart total
+    cart.markModified('items');
+    return await cart.save();
   }
 
   /**
-   * Update item quantity in cart
+   * Update cart item quantity
    * @param {string} userId - User ID
-   * @param {string} itemId - Item ID in cart
+   * @param {string} productId - Product ID
    * @param {number} quantity - New quantity
    * @returns {Promise<Cart>} Updated cart
    */
-  async updateItemQuantity(userId, itemId, quantity) {
-    if (quantity < 1) {
-      throw new Error('Quantity must be at least 1');
-    }
-    
-    const cart = await Cart.findOne({ user: userId, active: true });
+  async updateItemQuantity(userId, productId, quantity) {
+    const cart = await this.findByUserId(userId);
     
     if (!cart) {
       throw new Error('Cart not found');
     }
     
-    // Find the item to update
-    const item = cart.items.id(itemId);
+    const itemIndex = cart.items.findIndex(
+      (item) => item.product._id.toString() === productId
+    );
     
-    if (!item) {
+    if (itemIndex === -1) {
       throw new Error('Item not found in cart');
     }
     
     // Update quantity
-    item.quantity = quantity;
+    cart.items[itemIndex].quantity = quantity;
     
-    // Save and return updated cart
-    await cart.save();
-    return cart;
+    // Remove item if quantity is 0
+    if (quantity <= 0) {
+      cart.items.splice(itemIndex, 1);
+    }
+    
+    cart.markModified('items');
+    return await cart.save();
   }
 
   /**
    * Remove an item from cart
    * @param {string} userId - User ID
-   * @param {string} itemId - Item ID in cart
+   * @param {string} productId - Product ID
    * @returns {Promise<Cart>} Updated cart
    */
-  async removeItem(userId, itemId) {
-    const cart = await Cart.findOne({ user: userId, active: true });
+  async removeItem(userId, productId) {
+    const cart = await this.findByUserId(userId);
     
     if (!cart) {
       throw new Error('Cart not found');
     }
     
-    // Remove the item
-    cart.items = cart.items.filter(item => item._id.toString() !== itemId);
+    const itemIndex = cart.items.findIndex(
+      (item) => item.product._id.toString() === productId
+    );
     
-    // Save and return updated cart
-    await cart.save();
-    return cart;
+    if (itemIndex === -1) {
+      throw new Error('Item not found in cart');
+    }
+    
+    // Remove item
+    cart.items.splice(itemIndex, 1);
+    
+    cart.markModified('items');
+    return await cart.save();
   }
 
   /**
-   * Clear all items from cart
+   * Clear user's cart (after order completion)
    * @param {string} userId - User ID
    * @returns {Promise<Cart>} Empty cart
    */
   async clearCart(userId) {
-    const cart = await Cart.findOne({ user: userId, active: true });
+    const cart = await this.findByUserId(userId);
     
     if (!cart) {
       throw new Error('Cart not found');
     }
     
     cart.items = [];
-    cart.totalPrice = 0;
-    
-    await cart.save();
-    return cart;
-  }
-
-  /**
-   * Deactivate cart after order is placed
-   * @param {string} userId - User ID
-   * @returns {Promise<Cart>} Deactivated cart
-   */
-  async deactivateCart(userId) {
-    const cart = await Cart.findOne({ user: userId, active: true });
-    
-    if (!cart) {
-      throw new Error('Cart not found');
-    }
-    
-    cart.active = false;
-    
-    await cart.save();
-    return cart;
+    cart.markModified('items');
+    return await cart.save();
   }
 }
 
-module.exports = new CartRepository(); 
+// Export class
+module.exports = CartRepository; 

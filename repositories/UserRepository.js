@@ -1,10 +1,18 @@
 const User = require('../models/User');
+const BaseRepository = require('./BaseRepository');
 
 /**
  * Repository class for User data operations
- * Implements the Repository Pattern
+ * Implements the Repository Pattern and extends BaseRepository
  */
-class UserRepository {
+class UserRepository extends BaseRepository {
+  /**
+   * Constructor
+   */
+  constructor() {
+    super(User);
+  }
+
   /**
    * Create a new user
    * @param {Object} userData - User data
@@ -31,9 +39,9 @@ class UserRepository {
    */
   async findByUsername(taiKhoan, includePassword = false) {
     if (includePassword) {
-      return await User.findOne({ taiKhoan }).select('+matKhau');
+      return await this.model.findOne({ taiKhoan }).select('+matKhau');
     }
-    return await User.findOne({ taiKhoan });
+    return await this.model.findOne({ taiKhoan });
   }
 
   /**
@@ -44,9 +52,9 @@ class UserRepository {
    */
   async findByEmail(email, includePassword = false) {
     if (includePassword) {
-      return await User.findOne({ email }).select('+matKhau');
+      return await this.model.findOne({ email }).select('+matKhau');
     }
-    return await User.findOne({ email });
+    return await this.model.findOne({ email });
   }
 
   /**
@@ -96,6 +104,34 @@ class UserRepository {
     const query = { ...filter };
     return await User.countDocuments(query);
   }
+
+  /**
+   * Hook to execute before create operation
+   * @param {Object} data - User data
+   * @returns {Object} Processed user data
+   */
+  beforeCreate(data) {
+    // Ví dụ: đảm bảo email luôn là lowercase
+    if (data.email) {
+      data.email = data.email.toLowerCase();
+    }
+    return data;
+  }
+
+  /**
+   * Hook to execute before update operation
+   * @param {string} id - User ID
+   * @param {Object} data - Data to update
+   * @returns {Object} Processed update data
+   */
+  beforeUpdate(id, data) {
+    // Ví dụ: đảm bảo email luôn là lowercase khi cập nhật
+    if (data.email) {
+      data.email = data.email.toLowerCase();
+    }
+    return data;
+  }
 }
 
-module.exports = new UserRepository(); 
+// Export class
+module.exports = UserRepository; 

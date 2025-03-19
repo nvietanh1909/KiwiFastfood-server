@@ -1,21 +1,21 @@
 const express = require('express');
-const OrderService = require('../services/OrderService');
 const { protect, authorize } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
+const container = require('../config/dependencyContainer');
+
+// Lấy OrderFacade từ container thay vì OrderService
+const orderFacade = container.resolve('orderFacade');
 
 const router = express.Router();
-
-// All order routes require authentication
-router.use(protect);
 
 /**
  * @route   POST /api/orders
  * @desc    Create a new order
  * @access  Private
  */
-router.post('/', async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
-    const result = await OrderService.createOrder(req.user.id, req.body.items);
+    const result = await orderFacade.createOrder(req.user.id, req.body);
     res.status(201).json({
       success: true,
       data: result,
@@ -27,15 +27,12 @@ router.post('/', async (req, res) => {
 
 /**
  * @route   GET /api/orders
- * @desc    Get all orders for the logged-in user
+ * @desc    Get all user's orders
  * @access  Private
  */
-router.get('/', async (req, res) => {
+router.get('/', protect, async (req, res) => {
   try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    
-    const result = await OrderService.getUserOrders(req.user.id, page, limit);
+    const result = await orderFacade.getUserOrders(req.user.id);
     res.status(200).json({
       success: true,
       data: result,
@@ -47,16 +44,12 @@ router.get('/', async (req, res) => {
 
 /**
  * @route   GET /api/orders/:id
- * @desc    Get order details by ID
+ * @desc    Get order by ID
  * @access  Private
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', protect, async (req, res) => {
   try {
-    const result = await OrderService.getOrderById(
-      req.params.id,
-      req.user.id,
-      req.user.role === 'admin'
-    );
+    const result = await orderFacade.getOrderDetails(req.params.id, req.user.id);
     res.status(200).json({
       success: true,
       data: result,
@@ -67,18 +60,64 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
- * @route   PUT /api/orders/:id
- * @desc    Update order status
- * @access  Private/Admin
+ * @route   DELETE /api/orders/:id
+ * @desc    Cancel an order
+ * @access  Private
  */
-router.put('/:id', authorize('admin'), async (req, res) => {
+router.delete('/:id', protect, async (req, res) => {
   try {
-    const { tinhTrangGiaoHang, daThanhToan } = req.body;
-    const result = await OrderService.updateOrderStatus(
-      req.params.id, 
-      tinhTrangGiaoHang, 
-      daThanhToan
-    );
+    const result = await orderFacade.cancelOrder(req.params.id, req.user.id);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    errorHandler(error, req, res);
+  }
+});
+
+/**
+ * @route   PUT /api/orders/:id/status
+ * @desc    Update order status (admin only)
+ * @access  Private (Admin)
+ */
+router.put('/:id/status', protect, authorize('admin'), async (req, res) => {
+  try {
+    const result = await orderFacade.updateOrderStatus(req.params.id, req.body);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    errorHandler(error, req, res);
+  }
+});
+
+/**
+ * @route   PUT /api/orders/:id/complete
+ * @desc    Mark order as complete (admin only)
+ * @access  Private (Admin)
+ */
+router.put('/:id/complete', protect, authorize('admin'), async (req, res) => {
+  try {
+    const result = await orderFacade.completeOrder(req.params.id);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    errorHandler(error, req, res);
+  }
+});
+
+/**
+ * @route   POST /api/orders/:id/undo
+ * @desc    Undo last operation on this order (admin only)
+ * @access  Private (Admin)
+ */
+router.post('/:id/undo', protect, authorize('admin'), async (req, res) => {
+  try {
+    const result = await orderFacade.undoLastOperation();
     res.status(200).json({
       success: true,
       data: result,
