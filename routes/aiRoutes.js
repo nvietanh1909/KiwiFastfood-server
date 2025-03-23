@@ -4,7 +4,7 @@ const { Configuration, OpenAIApi } = require('openai');
 const asyncHandler = require('express-async-handler');
 
 // Configure OpenAI
-const configuration = new Configuration({
+const configuration = new Configuration ({
     apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
