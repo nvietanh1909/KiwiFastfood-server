@@ -3,6 +3,10 @@ const ProductRepository = require('../repositories/ProductRepository');
 const { ErrorResponse } = require('../middleware/errorHandler');
 const Validator = require('../utils/validator');
 
+// Khởi tạo repositories
+const cartRepository = new CartRepository();
+const productRepository = new ProductRepository();
+
 /**
  * Service class for Cart-related business logic
  * Implements the Service Pattern
@@ -15,8 +19,8 @@ class CartService {
    */
   async getCart(userId) {
     try {
-      const cart = await CartRepository.getCart(userId);
-      return cart;
+      const cart = await cartRepository.findByUserId(userId);
+      return cart || { userId, items: [] }; // Trả về giỏ hàng trống nếu không tìm thấy
     } catch (error) {
       throw new ErrorResponse(error.message, 500);
     }
@@ -36,7 +40,7 @@ class CartService {
     }
 
     // Check if product exists
-    const product = await ProductRepository.findById(itemData.product);
+    const product = await productRepository.findById(itemData.product);
     if (!product) {
       throw new ErrorResponse('Product not found', 404);
     }
@@ -47,7 +51,7 @@ class CartService {
     }
 
     try {
-      const cart = await CartRepository.addItem(userId, itemData);
+      const cart = await cartRepository.addItem(userId, itemData.product, itemData.quantity);
       return cart;
     } catch (error) {
       throw new ErrorResponse(error.message, 500);
@@ -68,7 +72,7 @@ class CartService {
     }
 
     try {
-      const cart = await CartRepository.updateItemQuantity(userId, itemId, quantity);
+      const cart = await cartRepository.updateItemQuantity(userId, itemId, quantity);
       return cart;
     } catch (error) {
       // Check if the error is from our repository
@@ -87,7 +91,7 @@ class CartService {
    */
   async removeItem(userId, itemId) {
     try {
-      const cart = await CartRepository.removeItem(userId, itemId);
+      const cart = await cartRepository.removeItem(userId, itemId);
       return cart;
     } catch (error) {
       if (error.message === 'Cart not found') {
@@ -104,7 +108,7 @@ class CartService {
    */
   async clearCart(userId) {
     try {
-      const cart = await CartRepository.clearCart(userId);
+      const cart = await cartRepository.clearCart(userId);
       return cart;
     } catch (error) {
       if (error.message === 'Cart not found') {
