@@ -14,7 +14,7 @@ router.use(authorize('admin'));
  * @route   GET /api/admin/orders
  * @desc    Get all orders (admin)
  * @access  Private/Admin
- */
+ */ 
 router.get('/orders', async (req, res) => {
   try {
     const page = parseInt(req.query.page, 10) || 1;

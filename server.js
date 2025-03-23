@@ -16,7 +16,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const cartRoutes = require('./routes/cartRoutes');
-
+const aiRoutes = require('./routes/aiRoutes');
 // Initialize Express
 const app = express();
 
@@ -42,6 +42,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/chatbot', aiRoutes);
 
 // Base route - Render documentation
 app.get('/', (req, res) => {
