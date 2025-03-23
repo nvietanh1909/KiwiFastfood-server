@@ -1,9 +1,10 @@
 const express = require('express');
-const ProductService = require('../services/ProductService');
+const container = require('../config/dependencyContainer');
 const { protect, authorize } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
+const productService = container.resolve('productService');
 
 /**
  * @route   GET /api/products
@@ -16,7 +17,7 @@ router.get('/', async (req, res) => {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     
-    const result = await ProductService.getAllProducts(req.query, page, limit);
+    const result = await productService.getAllProducts(req.query, page, limit);
     res.status(200).json({
       success: true,
       data: result,
@@ -33,7 +34,7 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    const result = await ProductService.getProductById(req.params.id);
+    const result = await productService.getProductById(req.params.id);
     res.status(200).json({
       success: true,
       data: result,
@@ -50,7 +51,7 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', protect, authorize('admin'), async (req, res) => {
   try {
-    const result = await ProductService.createProduct(req.body);
+    const result = await productService.createProduct(req.body);
     res.status(201).json({
       success: true,
       data: result,
@@ -67,7 +68,7 @@ router.post('/', protect, authorize('admin'), async (req, res) => {
  */
 router.put('/:id', protect, authorize('admin'), async (req, res) => {
   try {
-    const result = await ProductService.updateProduct(req.params.id, req.body);
+    const result = await productService.updateProduct(req.params.id, req.body);
     res.status(200).json({
       success: true,
       data: result,
@@ -84,7 +85,7 @@ router.put('/:id', protect, authorize('admin'), async (req, res) => {
  */
 router.delete('/:id', protect, authorize('admin'), async (req, res) => {
   try {
-    const result = await ProductService.deleteProduct(req.params.id);
+    const result = await productService.deleteProduct(req.params.id);
     res.status(200).json({
       success: true,
       data: result,
@@ -102,7 +103,7 @@ router.delete('/:id', protect, authorize('admin'), async (req, res) => {
 router.post('/:id/ratings', protect, async (req, res) => {
   try {
     const { rating, comment } = req.body;
-    const result = await ProductService.addRating(
+    const result = await productService.addRating(
       req.params.id,
       req.user.id,
       rating,
