@@ -1,5 +1,3 @@
-const ProductRepository = require('../repositories/ProductRepository');
-const CategoryRepository = require('../repositories/CategoryRepository');
 const { ErrorResponse } = require('../middleware/errorHandler');
 const Validator = require('../utils/validator');
 
@@ -8,6 +6,16 @@ const Validator = require('../utils/validator');
  * Implements the Service Pattern
  */
 class ProductService {
+  /**
+   * Constructor for ProductService
+   * @param {Object} productRepository - Repository for product data operations
+   * @param {Object} categoryRepository - Repository for category data operations
+   */
+  constructor(productRepository, categoryRepository) {
+    this.productRepository = productRepository;
+    this.categoryRepository = categoryRepository;
+  }
+
   /**
    * Create a new product
    * @param {Object} productData - Product data
@@ -28,13 +36,13 @@ class ProductService {
     }
 
     // Check if category exists
-    const category = await CategoryRepository.findById(productData.maLoai);
+    const category = await this.categoryRepository.findById(productData.maLoai);
     if (!category) {
       throw new ErrorResponse('Loại món không tồn tại', 400);
     }
 
     // Create product
-    const product = await ProductRepository.create(productData);
+    const product = await this.productRepository.create(productData);
 
     return product;
   }
@@ -51,10 +59,10 @@ class ProductService {
     const skip = (page - 1) * limit;
     
     // Get products
-    const products = await ProductRepository.getAll(queryParams, limit, skip);
+    const products = await this.productRepository.getAll(queryParams, limit, skip);
     
     // Get total count
-    const total = await ProductRepository.count(queryParams);
+    const total = await this.productRepository.count(queryParams);
     
     return {
       products,
@@ -73,7 +81,7 @@ class ProductService {
    * @returns {Object} Product data
    */
   async getProductById(id) {
-    const product = await ProductRepository.findById(id);
+    const product = await this.productRepository.findById(id);
     
     if (!product) {
       throw new ErrorResponse('Không tìm thấy sản phẩm', 404);
@@ -90,21 +98,21 @@ class ProductService {
    */
   async updateProduct(id, updateData) {
     // Check if product exists
-    let product = await ProductRepository.findById(id);
+    let product = await this.productRepository.findById(id);
     if (!product) {
       throw new ErrorResponse('Không tìm thấy sản phẩm', 404);
     }
     
     // If changing category, check if new category exists
     if (updateData.maLoai) {
-      const category = await CategoryRepository.findById(updateData.maLoai);
+      const category = await this.categoryRepository.findById(updateData.maLoai);
       if (!category) {
         throw new ErrorResponse('Loại món không tồn tại', 400);
       }
     }
     
     // Update product
-    product = await ProductRepository.update(id, updateData);
+    product = await this.productRepository.update(id, updateData);
     
     return product;
   }
@@ -116,13 +124,13 @@ class ProductService {
    */
   async deleteProduct(id) {
     // Check if product exists
-    const product = await ProductRepository.findById(id);
+    const product = await this.productRepository.findById(id);
     if (!product) {
       throw new ErrorResponse('Không tìm thấy sản phẩm', 404);
     }
     
     // Delete product
-    await ProductRepository.delete(id);
+    await this.productRepository.delete(id);
     
     return { id };
   }
@@ -142,7 +150,7 @@ class ProductService {
     }
     
     // Check if product exists
-    const product = await ProductRepository.findById(productId);
+    const product = await this.productRepository.findById(productId);
     if (!product) {
       throw new ErrorResponse('Product not found', 404);
     }
@@ -155,10 +163,10 @@ class ProductService {
       date: new Date(),
     };
     
-    const updatedProduct = await ProductRepository.addRating(productId, ratingData);
+    const updatedProduct = await this.productRepository.addRating(productId, ratingData);
     
     return updatedProduct;
   }
 }
 
-module.exports = new ProductService(); 
+module.exports = ProductService; 

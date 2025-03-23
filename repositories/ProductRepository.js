@@ -14,6 +14,69 @@ class ProductRepository extends BaseRepository {
   }
 
   /**
+   * Get all products with filtering
+   * @param {Object} queryParams - Query parameters for filtering
+   * @param {number} limit - Number of products to return
+   * @param {number} skip - Number of products to skip
+   * @param {Object} sort - Sort criteria
+   * @returns {Promise<Product[]>} Array of products
+   */
+  async getAll(queryParams = {}, limit = 10, skip = 0, sort = { createdAt: -1 }) {
+    // Build filter object
+    const filter = this.buildFilterObject(queryParams);
+    
+    // Call the parent's getAll method with the filter
+    return await super.getAll(filter, limit, skip, sort);
+  }
+
+  /**
+   * Count total products with filtering
+   * @param {Object} queryParams - Query parameters for filtering
+   * @returns {Promise<number>} Total count
+   */
+  async count(queryParams = {}) {
+    // Build filter object
+    const filter = this.buildFilterObject(queryParams);
+    
+    // Call the parent's count method with the filter
+    return await super.count(filter);
+  }
+
+  /**
+   * Build filter object from query parameters
+   * @param {Object} queryParams - Query parameters
+   * @returns {Object} MongoDB filter object
+   */
+  buildFilterObject(queryParams) {
+    const filter = {};
+    
+    // Category filter
+    if (queryParams.category) {
+      filter.maLoai = queryParams.category;
+    }
+    
+    // Name search
+    if (queryParams.search) {
+      filter.tenMon = { $regex: new RegExp(queryParams.search, 'i') };
+    }
+    
+    // Price range
+    if (queryParams.minPrice || queryParams.maxPrice) {
+      filter.giaBan = {};
+      
+      if (queryParams.minPrice) {
+        filter.giaBan.$gte = parseFloat(queryParams.minPrice);
+      }
+      
+      if (queryParams.maxPrice) {
+        filter.giaBan.$lte = parseFloat(queryParams.maxPrice);
+      }
+    }
+    
+    return filter;
+  }
+
+  /**
    * Find products by category
    * @param {string} categoryId - Category ID
    * @param {number} limit - Number of products to return
@@ -68,6 +131,23 @@ class ProductRepository extends BaseRepository {
   async countBySearch(keyword) {
     const regex = new RegExp(keyword, 'i');
     return await this.model.countDocuments({ tenMon: { $regex: regex } });
+  }
+
+  /**
+   * Add a rating to a product
+   * @param {string} productId - Product ID 
+   * @param {Object} ratingData - Rating data
+   * @returns {Promise<Product>} Updated product
+   */
+  async addRating(productId, ratingData) {
+    return await this.model.findByIdAndUpdate(
+      productId,
+      { 
+        $push: { ratings: ratingData },
+        $inc: { ratingCount: 1 }
+      },
+      { new: true }
+    );
   }
 
   /**
