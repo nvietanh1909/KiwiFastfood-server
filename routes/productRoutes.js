@@ -49,7 +49,7 @@ router.get('/:id', async (req, res) => {
  * @desc    Create a new product
  * @access  Private/Admin
  */
-router.post('/', protect, authorize('admin'), async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const result = await productService.createProduct(req.body);
     res.status(201).json({
