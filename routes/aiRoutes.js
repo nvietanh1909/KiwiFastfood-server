@@ -25,19 +25,7 @@ router.post('/chat', asyncHandler(async (req, res) => {
             });
         }
         
-        // Sử dụng mock response thay vì gọi OpenAI API
-        const mockResponse = "Xin chào! Tôi là trợ lý AI của Kiwi Fastfood. Chúng tôi có nhiều món ăn phổ biến như Burger Gà Cay, Burger Bò Phô Mai, Pizza Hải Sản, Pizza Thịt Hỗn Hợp, và Khoai Tây Chiên. Bạn thích ăn món nào ngọt hay mặn, cay hay không cay? Tôi có thể giới thiệu chi tiết hơn dựa trên sở thích của bạn.";
-        
-        res.json({
-            success: true,
-            response: mockResponse
-        });
-        
-        /* 
-        // Nếu bạn muốn cập nhật để sử dụng API mới, hãy bỏ comment phần code này
-        // và comment phần mock response ở trên
-        
-        // Sử dụng chat completions API mới thay vì completions API cũ
+        // Sử dụng chat completions API mới thay vì mock response
         const response = await openai.createChatCompletion({
             model: "gpt-3.5-turbo",
             messages: [
@@ -60,7 +48,6 @@ router.post('/chat', asyncHandler(async (req, res) => {
             success: true,
             response: aiResponse
         });
-        */
         
     } catch (error) {
         console.error('OpenAI API Error:', error);
@@ -87,14 +74,28 @@ router.post('/recommend', asyncHandler(async (req, res) => {
             });
         }
         
-        // Sử dụng mock response
-        const mockRecommendations = `1. Burger Gà Cay - Burger với thịt gà được tẩm ướp cay thơm, kèm rau tươi và sốt đặc biệt. Giá: 75.000đ
-2. Pizza Thịt Hỗn Hợp - Đế bánh giòn, phủ nhiều loại thịt và phô mai. Giá: 120.000đ
-3. Khoai Tây Chiên Phô Mai - Khoai tây chiên giòn phủ lớp phô mai béo ngậy. Giá: 45.000đ`;
+        // Sử dụng chat completions API mới
+        const response = await openai.createChatCompletion({
+            model: "gpt-3.5-turbo",
+            messages: [
+                {
+                    role: "system", 
+                    content: "Bạn là chuyên gia tư vấn thực đơn cho Kiwi Fastfood. Dựa trên sở thích của khách hàng, hãy đề xuất 3 món ăn phù hợp nhất từ thực đơn. Thực đơn có burger, pizza, món tráng miệng và đồ uống. Đề xuất nên có tên món, mô tả ngắn và giá. Trả lời bằng định dạng danh sách và tiếng Việt."
+                },
+                {
+                    role: "user", 
+                    content: `Sở thích của tôi: ${preferences}`
+                }
+            ],
+            max_tokens: 200,
+            temperature: 0.7,
+        });
+        
+        const recommendations = response.data.choices[0].message.content.trim();
         
         res.json({
             success: true,
-            recommendations: mockRecommendations
+            recommendations: recommendations
         });
         
     } catch (error) {
@@ -122,12 +123,28 @@ router.post('/description', asyncHandler(async (req, res) => {
             });
         }
         
-        // Sử dụng mock response
-        const mockDescription = `${foodName} - Món ăn tuyệt hảo với ${ingredients || 'các nguyên liệu tươi ngon'}, được chế biến tinh tế tạo nên hương vị đặc trưng khó quên. Thưởng thức ngay để cảm nhận sự khác biệt!`;
+        // Sử dụng chat completions API mới
+        const response = await openai.createChatCompletion({
+            model: "gpt-3.5-turbo",
+            messages: [
+                {
+                    role: "system", 
+                    content: "Bạn là chuyên gia ẩm thực viết mô tả hấp dẫn và lôi cuốn cho thực đơn nhà hàng. Mô tả nên ngắn gọn, sử dụng từ ngữ gợi cảm giác ngon miệng và làm người đọc muốn thử món ăn ngay lập tức. Trả lời bằng tiếng Việt, không quá 50 từ."
+                },
+                {
+                    role: "user", 
+                    content: `Viết mô tả hấp dẫn cho món "${foodName}" ${ingredients ? `với các nguyên liệu: ${ingredients}` : ''} cho thực đơn của nhà hàng Kiwi Fastfood.`
+                }
+            ],
+            max_tokens: 100,
+            temperature: 0.8,
+        });
+        
+        const description = response.data.choices[0].message.content.trim();
         
         res.json({
             success: true,
-            description: mockDescription
+            description: description
         });
         
     } catch (error) {
