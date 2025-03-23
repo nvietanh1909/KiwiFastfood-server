@@ -2,6 +2,10 @@ const CategoryRepository = require('../repositories/CategoryRepository');
 const ProductRepository = require('../repositories/ProductRepository');
 const { ErrorResponse } = require('../middleware/errorHandler');
 
+// Initialize repositories
+const categoryRepository = new CategoryRepository();
+const productRepository = new ProductRepository();
+
 /**
  * Service class for Category-related business logic
  * Implements the Service Pattern
@@ -19,7 +23,7 @@ class CategoryService {
     }
 
     // Create category
-    const category = await CategoryRepository.create(categoryData);
+    const category = await categoryRepository.create(categoryData);
 
     return category;
   }
@@ -29,8 +33,7 @@ class CategoryService {
    * @returns {Object} Categories
    */
   async getAllCategories() {
-    const categories = await CategoryRepository.getAll();
-    
+    const categories = await categoryRepository.getAll();
     return categories;
   }
 
@@ -40,7 +43,7 @@ class CategoryService {
    * @returns {Object} Category data
    */
   async getCategoryById(id) {
-    const category = await CategoryRepository.findById(id);
+    const category = await categoryRepository.findById(id);
     
     if (!category) {
       throw new ErrorResponse('Không tìm thấy loại', 404);
@@ -62,13 +65,13 @@ class CategoryService {
     }
     
     // Check if category exists
-    let category = await CategoryRepository.findById(id);
+    let category = await categoryRepository.findById(id);
     if (!category) {
       throw new ErrorResponse('Không tìm thấy loại', 404);
     }
     
     // Update category
-    category = await CategoryRepository.update(id, updateData);
+    category = await categoryRepository.update(id, updateData);
     
     return category;
   }
@@ -80,19 +83,19 @@ class CategoryService {
    */
   async deleteCategory(id) {
     // Check if category exists
-    const category = await CategoryRepository.findById(id);
+    const category = await categoryRepository.findById(id);
     if (!category) {
       throw new ErrorResponse('Không tìm thấy loại', 404);
     }
     
     // Check if there are products using this category
-    const products = await ProductRepository.getByCategory(id);
+    const products = await productRepository.getByCategory(id);
     if (products.length > 0) {
       throw new ErrorResponse('Không thể xóa loại này vì đang có sản phẩm thuộc loại này', 400);
     }
     
     // Delete category
-    await CategoryRepository.delete(id);
+    await categoryRepository.delete(id);
     
     return { id };
   }
@@ -104,13 +107,13 @@ class CategoryService {
    */
   async getProductsByCategory(categoryId) {
     // Check if category exists
-    const category = await CategoryRepository.findById(categoryId);
+    const category = await categoryRepository.findById(categoryId);
     if (!category) {
       throw new ErrorResponse('Không tìm thấy loại', 404);
     }
     
     // Get products
-    const products = await ProductRepository.getByCategory(categoryId);
+    const products = await productRepository.getByCategory(categoryId);
     
     return {
       category,
