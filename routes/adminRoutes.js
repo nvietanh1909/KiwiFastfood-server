@@ -8,8 +8,8 @@ const UserService = container.resolve('userService');
 const router = express.Router();
 
 // All admin routes require authentication and admin role
-// router.use(protect);
-// router.use(authorize('admin'));
+router.use(protect);
+router.use(authorize('admin'));
 
 /**
  * @route   GET /api/admin/orders
