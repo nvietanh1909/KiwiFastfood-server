@@ -1,8 +1,9 @@
 const express = require('express');
-const OrderService = require('../services/OrderService');
-const UserService = require('../services/UserService');
 const { protect, authorize } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
+const container = require('../config/dependencyContainer');
+const OrderService = container.resolve('orderService');
+const UserService = container.resolve('userService');
 
 const router = express.Router();
 
