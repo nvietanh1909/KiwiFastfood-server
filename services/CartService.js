@@ -20,7 +20,7 @@ class CartService {
   async getCart(userId) {
     try {
       const cart = await cartRepository.findByUserId(userId);
-      return cart || { userId, items: [] }; // Trả về giỏ hàng trống nếu không tìm thấy
+      return cart || { user: userId, items: [] }; // Trả về giỏ hàng trống nếu không tìm thấy
     } catch (error) {
       throw new ErrorResponse(error.message, 500);
     }
@@ -46,7 +46,7 @@ class CartService {
     }
 
     // Check if product is in stock
-    if (!product.inStock) {
+    if (product.soLuongTon <= 0) {
       throw new ErrorResponse('Product is out of stock', 400);
     }
 

@@ -19,7 +19,7 @@ class CartRepository extends BaseRepository {
    * @returns {Promise<Cart>} Cart document
    */
   async findByUserId(userId) {
-    return await this.model.findOne({ userId }).populate('items.product');
+    return await this.model.findOne({ user: userId }).populate('items.product');
   }
 
   /**
@@ -30,13 +30,24 @@ class CartRepository extends BaseRepository {
    * @returns {Promise<Cart>} Updated cart
    */
   async addItem(userId, productId, quantity) {
+    // First get product details to add name and price
+    const product = await require('../models/Product').findById(productId);
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    
     let cart = await this.findByUserId(userId);
     
     // If cart doesn't exist, create one
     if (!cart) {
       cart = await this.create({
-        userId,
-        items: [{ product: productId, quantity }],
+        user: userId,
+        items: [{
+          product: productId,
+          quantity: quantity,
+          name: product.tenMon,
+          price: product.giaBan
+        }],
       });
       return cart;
     }
@@ -51,7 +62,12 @@ class CartRepository extends BaseRepository {
       cart.items[itemIndex].quantity += quantity;
     } else {
       // Add new product to cart
-      cart.items.push({ product: productId, quantity });
+      cart.items.push({
+        product: productId,
+        quantity: quantity,
+        name: product.tenMon,
+        price: product.giaBan
+      });
     }
     
     // Calculate cart total
