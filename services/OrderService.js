@@ -90,13 +90,19 @@ class OrderService {
     // Create order
     const order = await this.orderRepository.create({
       maKH: userId,
-      hoTen: user.hoTen,
-      dienThoaiKH: user.dienThoaiKH,
-      diaChiKH: user.diaChiKH,
-      items: orderItems,
-      tongTien,
-      tinhTrangGiaoHang: false,
-      daThanhToan: false,
+      items: orderItems.map(item => ({
+        product: item.maMon,
+        name: item.tenMon,
+        quantity: item.soLuong,
+        price: item.giaBan
+      })),
+      shippingAddress: orderData.shippingAddress,
+      phoneNumber: orderData.phoneNumber,
+      paymentMethod: orderData.paymentMethod,
+      notes: orderData.notes,
+      totalPrice: tongTien,
+      status: 'pending',
+      paymentStatus: 'pending'
     });
 
     // Thông báo order đã được tạo

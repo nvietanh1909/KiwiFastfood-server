@@ -82,6 +82,16 @@ class Validator {
           soLuong: Joi.number().integer().min(1).required(),
         })
       ).min(1).required(),
+      shippingAddress: Joi.object({
+        street: Joi.string().required(),
+        city: Joi.string().required(),
+        state: Joi.string().required(),
+        zipCode: Joi.string().required(),
+        country: Joi.string().required()
+      }).required(),
+      phoneNumber: Joi.string().required(),
+      paymentMethod: Joi.string().valid('cash', 'credit_card', 'debit_card', 'online_payment').required(),
+      notes: Joi.string().allow('', null)
     });
 
     return schema.validate(data);
@@ -110,6 +120,28 @@ class Validator {
     const schema = Joi.object({
       product: Joi.string().required(),
       quantity: Joi.number().integer().min(1).required()
+    });
+
+    return schema.validate(data);
+  }
+
+  /**
+   * Validate order from cart data
+   * @param {Object} data - Order data without items (from cart)
+   * @returns {Object} Validation result
+   */
+  static validateOrderFromCart(data) {
+    const schema = Joi.object({
+      shippingAddress: Joi.object({
+        street: Joi.string().required(),
+        city: Joi.string().required(),
+        state: Joi.string().required(),
+        zipCode: Joi.string().required(),
+        country: Joi.string().required()
+      }).required(),
+      phoneNumber: Joi.string().required(),
+      paymentMethod: Joi.string().valid('cash', 'credit_card', 'debit_card', 'online_payment').required(),
+      notes: Joi.string().allow('', null)
     });
 
     return schema.validate(data);
