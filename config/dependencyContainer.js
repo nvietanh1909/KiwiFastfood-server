@@ -60,16 +60,16 @@
   const ProductService = require('../services/ProductService');
   const OrderService = require('../services/OrderService');
   const CategoryService = require('../services/CategoryService');
-  const CartService = require('../services/CartService');
+  const cartService = require('../services/CartService'); // Changed to lowercase as it's an instance
   const OrderFacade = require('../services/OrderFacade');
 
   container.register('userService', (c) => new UserService(c.resolve('userRepository')));
   container.register('productService', (c) => new ProductService(c.resolve('productRepository'), c.resolve('categoryRepository')));
   container.register('orderService', (c) => new OrderService(c.resolve('orderRepository'), c.resolve('productRepository'), c.resolve('userRepository')));
   container.register('categoryService', (c) => new CategoryService(c.resolve('categoryRepository')));
-  container.register('cartService', (c) => new CartService(c.resolve('cartRepository'), c.resolve('productRepository')));
+  container.register('cartService', () => cartService); // Register the imported instance directly
 
-  // Đăng ký OrderFacade với OrderService
-  container.register('orderFacade', (c) => new OrderFacade(c.resolve('orderService')));
+  // Đăng ký OrderFacade với OrderService và CartService
+  container.register('orderFacade', (c) => new OrderFacade(c.resolve('orderService'), c.resolve('cartService')));
 
   module.exports = container; 

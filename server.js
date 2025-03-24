@@ -17,6 +17,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 // Initialize Express
 const app = express();
 
@@ -43,7 +44,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/chatbot', aiRoutes);
-
+app.use('/api/payments', paymentRoutes);
 // Base route - Render documentation
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

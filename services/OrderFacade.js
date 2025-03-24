@@ -8,9 +8,11 @@ const { eventManager, OrderNotificationObserver } = require('../utils/observer')
 class OrderFacade {
   /**
    * @param {OrderService} orderService - Order service instance
+   * @param {CartService} cartService - Cart service instance
    */
-  constructor(orderService) {
+  constructor(orderService, cartService) {
     this.orderService = orderService;
+    this.cartService = cartService;
     this.commandInvoker = new OrderCommandInvoker();
     this.setupNotifications();
   }
@@ -145,10 +147,14 @@ class OrderFacade {
     }
 
     // Chuyển đổi mục giỏ hàng thành mục đơn hàng
-    const orderItems = cart.items.map(item => ({
-      maMon: item.product._id || item.product,
-      soLuong: item.quantity
-    }));
+    const orderItems = cart.items.map(item => {
+      // Đảm bảo maMon luôn là chuỗi
+      const productId = item.product._id || item.product;
+      return {
+        maMon: productId.toString(), // Chuyển đổi sang chuỗi
+        soLuong: item.quantity
+      };
+    });
 
     // Tạo dữ liệu đơn hàng
     const completeOrderData = {

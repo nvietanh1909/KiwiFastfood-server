@@ -120,6 +120,26 @@ class OrderStatusStrategy extends ValidationStrategy {
 }
 
 /**
+ * Strategy validation cho đơn hàng từ giỏ hàng
+ */
+class OrderFromCartStrategy extends ValidationStrategy {
+  createSchema() {
+    return Joi.object({
+      shippingAddress: Joi.object({
+        street: Joi.string().required(),
+        city: Joi.string().required(),
+        state: Joi.string().required(),
+        zipCode: Joi.string().required(),
+        country: Joi.string().required()
+      }).required(),
+      phoneNumber: Joi.string().required(),
+      paymentMethod: Joi.string().valid('cash', 'credit_card', 'debit_card', 'online_payment').required(),
+      notes: Joi.string().allow('', null)
+    });
+  }
+}
+
+/**
  * Context class để sử dụng các validation strategy
  */
 class ValidationContext {
@@ -157,6 +177,7 @@ const strategies = {
   category: new CategoryStrategy(),
   order: new OrderStrategy(),
   orderStatus: new OrderStatusStrategy(),
+  orderFromCart: new OrderFromCartStrategy(),
 };
 
 module.exports = {
