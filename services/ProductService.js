@@ -1,6 +1,6 @@
 const { ErrorResponse } = require('../middleware/errorHandler');
 const Validator = require('../utils/validator');
-const uploadService = require('./uploadService');
+const uploadService = require('./UploadService');
 
 /**
  * Service class for Product-related business logic
