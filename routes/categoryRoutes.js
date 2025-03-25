@@ -10,7 +10,7 @@ const router = express.Router();
  * @desc    Get all categories
  * @access  Public
  */
-router.get('/', protect, authorize('admin'), async (req, res) => {
+router.get('/', protect, authorize('admin'),  async (req, res) => {
   try {
     const result = await CategoryService.getAllCategories();
     res.status(200).json({

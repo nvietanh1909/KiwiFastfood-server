@@ -1,5 +1,6 @@
 const { ErrorResponse } = require('../middleware/errorHandler');
 const Validator = require('../utils/validator');
+const uploadService = require('./uploadService');
 
 /**
  * Service class for Product-related business logic
@@ -19,9 +20,10 @@ class ProductService {
   /**
    * Create a new product
    * @param {Object} productData - Product data
+   * @param {Object} imageFile - Image file for product
    * @returns {Object} Created product
    */
-  async createProduct(productData) {
+  async createProduct(productData, imageFile) {
     // Validate input data
     if (!productData.tenMon) {
       throw new ErrorResponse('Vui lòng nhập tên món', 400);
@@ -39,6 +41,16 @@ class ProductService {
     const category = await this.categoryRepository.findById(productData.maLoai);
     if (!category) {
       throw new ErrorResponse('Loại món không tồn tại', 400);
+    }
+
+    // Upload image if provided
+    if (imageFile) {
+      try {
+        const imageId = await uploadService.uploadImage(imageFile);
+        productData.anhDD = imageId; // Lưu ID của ảnh từ Firestore
+      } catch (error) {
+        throw new ErrorResponse(`Lỗi upload ảnh: ${error.message}`, 500);
+      }
     }
 
     // Create product

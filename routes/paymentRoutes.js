@@ -2,13 +2,19 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
+const Order = require('../models/Order');
 
 function createHash(data, secret) {
+  if (!secret) {
+    console.error('Hash secret is undefined or empty');
+    throw new Error('Hash secret key is missing or invalid');
+  }
   return crypto.createHmac('sha512', secret).update(data).digest('hex');
 }
 
 router.post('/create_payment_url', (req, res) => {
-  const { amount, orderId, orderInfo } = req.body;
+  const { amount, orderId, orderInfo, returnUrl } = req.body;
 
   const date = new Date();
   const vnp_TmnCode = process.env.VNP_TMNCODE;
@@ -16,14 +22,27 @@ router.post('/create_payment_url', (req, res) => {
   const vnp_Url = process.env.VNP_URL;
   const vnp_ReturnUrl = process.env.VNP_RETURNURL;
 
+  if (!vnp_HashSecret || !vnp_TmnCode || !vnp_Url || !vnp_ReturnUrl) {
+    return res.status(500).json({
+      success: false,
+      error: 'Payment configuration is incomplete. Some environment variables are missing.'
+    });
+  }
+  
   const createDate = date.toISOString().replace(/[-:T.]/g, '').slice(0, 14); 
+
+  const combinedOrderInfo = JSON.stringify({
+    orderInfo: orderInfo || 'Thanh toan don hang',
+    returnUrl: returnUrl || `${process.env.CLIENT_URL}/Payment/Success`
+  });
+
   const vnp_Params = {
     vnp_Version: '2.1.0',
     vnp_Command: 'pay',
     vnp_TmnCode: vnp_TmnCode,
-    vnp_Amount: amount * 100, 
+    vnp_Amount: amount * 100,
     vnp_CurrCode: 'VND',
-    vnp_TxnRef: orderId || createDate, 
+    vnp_TxnRef: orderId || createDate,
     vnp_OrderInfo: orderInfo || 'Thanh toan don hang',
     vnp_OrderType: 'billpayment',
     vnp_Locale: 'vn',
@@ -48,8 +67,7 @@ router.post('/create_payment_url', (req, res) => {
   res.json({ paymentUrl });
 });
 
-
-router.get('/vnpay_return', (req, res) => {
+router.get('/vnpay_return', async (req, res) => {
   const vnp_Params = req.query;
   const secureHash = vnp_Params['vnp_SecureHash'];
   delete vnp_Params['vnp_SecureHash'];
@@ -70,25 +88,30 @@ router.get('/vnpay_return', (req, res) => {
     const rspCode = vnp_Params['vnp_ResponseCode'];
     const transactionData = {
       amount: vnp_Params['vnp_Amount'] / 100,
-      bankCode: vnp_Params['vnp_BankCode'],
-      cardType: vnp_Params['vnp_CardType'],
-      orderInfo: vnp_Params['vnp_OrderInfo'],
-      payDate: vnp_Params['vnp_PayDate'],
+      orderId: vnp_Params['vnp_TxnRef'],
+      transactionId: vnp_Params['vnp_TransactionNo'],
       responseCode: rspCode,
-      transactionNo: vnp_Params['vnp_TransactionNo'],
-      txnRef: vnp_Params['vnp_TxnRef'],
+      paymentDate: vnp_Params['vnp_PayDate'],
+      bankCode: vnp_Params['vnp_BankCode'],
+      orderInfo: vnp_Params['vnp_OrderInfo']
     };
 
     if (rspCode === '00') {
-      console.log('Transaction Success:', transactionData);
-      res.status(200).json({ message: 'Thanh toán thành công', data: transactionData });
-    } else {
-      console.log('Transaction Failed:', transactionData);
-      res.status(400).json({ message: 'Thanh toán thất bại', data: transactionData });
+      try {
+        const order = await Order.findById(transactionData.orderId);
+        if (order) {
+          order.paymentStatus = 'paid';
+          order.paymentDetails = transactionData;
+          await order.save();
+        }
+      } catch (error) {
+        console.error('Error updating order payment status:', error);
+      }
     }
+
+    res.redirect(`${process.env.CLIENT_URL}/Payment/Success?status=${rspCode === '00' ? 'success' : 'failed'}`);
   } else {
-    console.log('Invalid Signature:', vnp_Params);
-    res.status(400).json({ message: 'Chữ ký không hợp lệ' });
+    res.redirect(`${process.env.CLIENT_URL}/Payment/Success?status=failed&message=Invalid signature`);
   }
 });
 
