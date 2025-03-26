@@ -24,9 +24,6 @@ jobs:
     - name: Fix security vulnerabilities
       run: npm audit fix --force || true
       
-    # Tạm thời bỏ qua bước build vì chưa có script build
-    # - name: Build
-    #   run: npm run build
 
   create-pull-request:
     needs: build-and-test
