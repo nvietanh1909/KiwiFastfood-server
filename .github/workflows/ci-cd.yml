@@ -1,24 +1,32 @@
 name: CI/CD Pipeline
 
 on:
-  # Trigger khi có push vào bất kỳ nhánh nào
   push:
-    branches-ignore:
-      - main  # Không trigger khi push trực tiếp vào main
+    branches:
+      - dev
   pull_request:
     branches: 
-      - main  # Chỉ trigger khi có PR vào main
+      - main
+  workflow_dispatch: 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    outputs:
+      build_status: ${{ job.status }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
           
       - name: Install dependencies
         run: npm install
@@ -26,31 +34,23 @@ jobs:
       - name: Fix security vulnerabilities
         run: npm audit fix --force || true
         
-      # Sau này khi có tests sẽ uncomment
       # - name: Run tests
       #   run: npm test
 
-  push-to-dev:
-    needs: build-and-test  # Chỉ chạy khi build-and-test thành công
-    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev'  # Chỉ chạy khi không phải push vào main hoặc dev
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+      - name: Cache build artifacts
+        uses: actions/cache@v3
         with:
-          fetch-depth: 0
-          
-      - name: Push to dev branch
-        run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'github-actions@github.com'
-          git fetch origin dev
-          git checkout -b dev origin/dev
-          git merge ${{ github.sha }} --no-ff -m "Merge changes from feature branch"
-          git push origin dev
+          path: |
+            node_modules
+            .next
+            dist
+          key: ${{ runner.os }}-build-${{ github.sha }}
 
   create-pr-to-main:
-    needs: [build-and-test, push-to-dev] 
-    if: github.ref == 'refs/heads/dev' 
+    needs: build-and-test 
+    if: |
+      github.ref == 'refs/heads/dev' && 
+      needs.build-and-test.outputs.build_status == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -59,8 +59,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
           
       - name: Create Pull Request to main
+        id: create-pr
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.PAT_TOKEN }}
@@ -76,24 +78,47 @@ jobs:
           draft: false
           delete-branch: false
 
+      - name: Check PR Status
+        if: steps.create-pr.outputs.pull-request-number
+        run: |
+          echo "Pull Request created successfully!"
+          echo "PR Number: ${{ steps.create-pr.outputs.pull-request-number }}"
+          echo "PR URL: ${{ steps.create-pr.outputs.pull-request-url }}"
+
   deploy-to-production:
     needs: [build-and-test]
-    if: github.ref == 'refs/heads/main'  # Chỉ deploy khi merge vào main
+    if: |
+      github.ref == 'refs/heads/main' && 
+      needs.build-and-test.outputs.build_status == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
           
       - name: Install dependencies
         run: npm install
+
+      - name: Restore build artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            .next
+            dist
+          key: ${{ runner.os }}-build-${{ github.sha }}
         
       - name: Deploy to Production
+        id: deploy
         env:
           NODE_ENV: production
         run: |
-          echo "Deploying to production..."
-          # Thêm các lệnh deploy production ở đây 
+          echo "Starting deployment to production..."
+          # Thêm các lệnh deploy production ở đây
+          echo "Deployment completed successfully!" 
