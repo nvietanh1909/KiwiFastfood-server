@@ -93,6 +93,16 @@ class OrderStrategy extends ValidationStrategy {
           soLuong: Joi.number().integer().min(1).required(),
         })
       ).min(1).required(),
+      shippingAddress: Joi.object({
+        street: Joi.string().required(),
+        city: Joi.string().required(),
+        state: Joi.string().required(),
+        zipCode: Joi.string().required(),
+        country: Joi.string().required()
+      }).required(),
+      phoneNumber: Joi.string().required(),
+      paymentMethod: Joi.string().valid('cash', 'credit_card', 'debit_card', 'online_payment').required(),
+      notes: Joi.string().allow('', null)
     });
   }
 }
@@ -106,6 +116,26 @@ class OrderStatusStrategy extends ValidationStrategy {
       tinhTrangGiaoHang: Joi.boolean(),
       daThanhToan: Joi.boolean(),
     }).or('tinhTrangGiaoHang', 'daThanhToan');
+  }
+}
+
+/**
+ * Strategy validation cho đơn hàng từ giỏ hàng
+ */
+class OrderFromCartStrategy extends ValidationStrategy {
+  createSchema() {
+    return Joi.object({
+      shippingAddress: Joi.object({
+        street: Joi.string().required(),
+        city: Joi.string().required(),
+        state: Joi.string().required(),
+        zipCode: Joi.string().required(),
+        country: Joi.string().required()
+      }).required(),
+      phoneNumber: Joi.string().required(),
+      paymentMethod: Joi.string().valid('cash', 'credit_card', 'debit_card', 'online_payment').required(),
+      notes: Joi.string().allow('', null)
+    });
   }
 }
 
@@ -147,6 +177,7 @@ const strategies = {
   category: new CategoryStrategy(),
   order: new OrderStrategy(),
   orderStatus: new OrderStatusStrategy(),
+  orderFromCart: new OrderFromCartStrategy(),
 };
 
 module.exports = {

@@ -162,6 +162,48 @@ class ProductRepository extends BaseRepository {
     }
     return data;
   }
+
+  /**
+   * Get popular products based on order count
+   * @param {number} limit - Number of products to return
+   * @param {number} page - Page number
+   * @returns {Promise<Object>} Products with pagination info
+   */
+  async getPopularProducts(limit = 10, page = 1) {
+    const skip = (page - 1) * limit;
+    const [products, total] = await Promise.all([
+      this.model.find()
+        .sort({ soLuongBan: -1 })
+        .limit(limit)
+        .skip(skip)
+        .populate('maLoai'),
+      this.model.countDocuments()
+    ]);
+
+    return {
+      products,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    };
+  }
+
+  /**
+   * Update product's sold quantity
+   * @param {string} productId - Product ID
+   * @param {number} quantity - Quantity to add
+   * @returns {Promise<Product>} Updated product
+   */
+  async updateSoldQuantity(productId, quantity) {
+    return await this.model.findByIdAndUpdate(
+      productId,
+      { $inc: { soLuongBan: quantity } },
+      { new: true }
+    );
+  }
 }
 
 // Export class

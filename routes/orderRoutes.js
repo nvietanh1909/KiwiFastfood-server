@@ -15,7 +15,7 @@ const router = express.Router();
  */
 router.post('/', protect, async (req, res) => {
   try {
-    const result = await orderFacade.createOrder(req.user.id, req.body);
+    const result = await orderFacade.createOrderFromCart(req.user.id, req.body);
     res.status(201).json({
       success: true,
       data: result,

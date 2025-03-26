@@ -8,9 +8,11 @@ const { eventManager, OrderNotificationObserver } = require('../utils/observer')
 class OrderFacade {
   /**
    * @param {OrderService} orderService - Order service instance
+   * @param {CartService} cartService - Cart service instance
    */
-  constructor(orderService) {
+  constructor(orderService, cartService) {
     this.orderService = orderService;
+    this.cartService = cartService;
     this.commandInvoker = new OrderCommandInvoker();
     this.setupNotifications();
   }
@@ -119,6 +121,54 @@ class OrderFacade {
    */
   async getUserOrders(userId) {
     return await this.orderService.getUserOrders(userId);
+  }
+
+  /**
+   * Tạo đơn hàng mới từ giỏ hàng
+   * @param {string} userId - User ID
+   * @param {Object} orderData - Order data (shipping, payment info)
+   * @returns {Object} Created order
+   */
+  async createOrderFromCart(userId, orderData) {
+    // Xác thực dữ liệu đầu vào
+    const { ValidationContext, strategies } = require('../utils/validationStrategies');
+    const validator = new ValidationContext(strategies.orderFromCart);
+    const { error } = validator.validate(orderData);
+    if (error) {
+      throw new Error(error.details[0].message);
+    }
+    
+    // Lấy giỏ hàng của người dùng
+    const cart = await this.cartService.getCart(userId);
+    
+    // Kiểm tra giỏ hàng có sản phẩm không
+    if (!cart || !cart.items || cart.items.length === 0) {
+      throw new Error('Giỏ hàng trống, không thể tạo đơn hàng');
+    }
+
+    // Chuyển đổi mục giỏ hàng thành mục đơn hàng
+    const orderItems = cart.items.map(item => {
+      // Đảm bảo maMon luôn là chuỗi
+      const productId = item.product._id || item.product;
+      return {
+        maMon: productId.toString(), // Chuyển đổi sang chuỗi
+        soLuong: item.quantity
+      };
+    });
+
+    // Tạo dữ liệu đơn hàng
+    const completeOrderData = {
+      ...orderData,
+      items: orderItems
+    };
+
+    // Tạo đơn hàng
+    const order = await this.createOrder(userId, completeOrderData);
+
+    // Xóa giỏ hàng sau khi đặt hàng thành công
+    await this.cartService.clearCart(userId);
+
+    return order;
   }
 }
 

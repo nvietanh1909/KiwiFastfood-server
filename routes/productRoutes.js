@@ -2,9 +2,30 @@ const express = require('express');
 const container = require('../config/dependencyContainer');
 const { protect, authorize } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 const productService = container.resolve('productService');
+
+/**
+ * @route   GET /api/products/recommended
+ * @desc    Get recommended products based on popularity
+ * @access  Public
+ */
+router.get('/recommended', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const page = parseInt(req.query.page, 10) || 1;
+    const result = await productService.getRecommendedProducts(limit, page);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    errorHandler(error, req, res);
+  }
+});
 
 /**
  * @route   GET /api/products
@@ -49,9 +70,19 @@ router.get('/:id', async (req, res) => {
  * @desc    Create a new product
  * @access  Private/Admin
  */
-router.post('/', async (req, res) => {
+router.post('/', protect, authorize('admin'), upload.single('anhDD'), async (req, res) => {
   try {
-    const result = await productService.createProduct(req.body);
+    console.log('Request body:', req.body);
+    console.log('Request file:', req.file); // Kiểm tra file ảnh
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng upload ảnh sản phẩm'
+      });
+    }
+
+    const result = await productService.createProduct(req.body, req.file);
     res.status(201).json({
       success: true,
       data: result,
