@@ -141,10 +141,33 @@ class ProductService {
       throw new ErrorResponse('Không tìm thấy sản phẩm', 404);
     }
     
-    // Delete product
-    await this.productRepository.delete(id);
-    
-    return { id };
+    try {
+      // Nếu sản phẩm có ảnh, xóa ảnh trước
+      if (product.anhDD) {
+        // Lấy tên file từ URL
+        const imageUrl = product.anhDD;
+        let key;
+        
+        if (imageUrl.includes('products/')) {
+          // Nếu URL chứa đường dẫn đầy đủ
+          key = 'products/' + imageUrl.split('products/')[1];
+        } else {
+          // Nếu URL chỉ chứa tên file
+          key = 'products/' + imageUrl.split('/').pop();
+        }
+        
+        console.log('Deleting image with key:', key);
+        await uploadService.deleteImage(key);
+      }
+      
+      // Sau khi xóa ảnh thành công, xóa sản phẩm
+      await this.productRepository.delete(id);
+      
+      return { id, message: 'Đã xóa sản phẩm và ảnh thành công' };
+    } catch (error) {
+      console.error('Error deleting product and image:', error);
+      throw new ErrorResponse(`Lỗi khi xóa sản phẩm: ${error.message}`, 500);
+    }
   }
 
   /**
@@ -178,6 +201,16 @@ class ProductService {
     const updatedProduct = await this.productRepository.addRating(productId, ratingData);
     
     return updatedProduct;
+  }
+
+  /**
+   * Get recommended products based on popularity
+   * @param {number} limit - Number of products to return
+   * @param {number} page - Page number
+   * @returns {Object} Recommended products with pagination
+   */
+  async getRecommendedProducts(limit = 10, page = 1) {
+    return await this.productRepository.getPopularProducts(limit, page);
   }
 }
 

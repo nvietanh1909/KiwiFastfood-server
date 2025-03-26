@@ -27,6 +27,11 @@ const ProductSchema = new mongoose.Schema(
       min: [0, 'Số lượng tồn phải là số dương'],
       default: 0,
     },
+    soLuongBan: {
+      type: Number,
+      default: 0,
+      min: [0, 'Số lượng bán phải là số không âm'],
+    },
     maLoai: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',

@@ -146,43 +146,29 @@ class OrderService {
   }
 
   /**
-   * Update order status (admin only)
+   * Update order status
    * @param {string} orderId - Order ID
-   * @param {Object} statusData - Status data
+   * @param {string} status - New status
    * @returns {Object} Updated order
    */
-  async updateOrderStatus(orderId, statusData) {
-    // Validate status data
-    this.validator.setStrategy(strategies.orderStatus);
-    const { error } = this.validator.validate(statusData);
-    if (error) {
-      throw new ErrorResponse(error.details[0].message, 400);
-    }
-
-    // Find order
+  async updateOrderStatus(orderId, status) {
     const order = await this.orderRepository.findById(orderId);
     if (!order) {
       throw new ErrorResponse('Không tìm thấy đơn hàng', 404);
     }
 
     // Update order status
-    const updatedOrder = await this.orderRepository.update(orderId, statusData);
-
-    // Thông báo status đã được cập nhật
-    eventManager.notify('order.statusChanged', {
-      orderId: order._id,
-      userId: order.maKH,
-      previousStatus: {
-        delivered: order.tinhTrangGiaoHang,
-        paid: order.daThanhToan
-      },
-      newStatus: {
-        delivered: statusData.tinhTrangGiaoHang !== undefined ? statusData.tinhTrangGiaoHang : order.tinhTrangGiaoHang,
-        paid: statusData.daThanhToan !== undefined ? statusData.daThanhToan : order.daThanhToan
+    order.status = status;
+    
+    // If order is delivered, update product sold quantities
+    if (status === 'delivered') {
+      for (const item of order.items) {
+        await this.productRepository.updateSoldQuantity(item.product, item.quantity);
       }
-    });
+    }
 
-    return updatedOrder;
+    await order.save();
+    return order;
   }
 
   /**

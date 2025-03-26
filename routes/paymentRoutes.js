@@ -100,6 +100,7 @@ router.get('/vnpay_return', async (req, res) => {
       try {
         const order = await Order.findById(transactionData.orderId);
         if (order) {
+          order.daThanhToan = true;
           order.paymentStatus = 'paid';
           order.paymentDetails = transactionData;
           await order.save();

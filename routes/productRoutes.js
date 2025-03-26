@@ -9,6 +9,25 @@ const router = express.Router();
 const productService = container.resolve('productService');
 
 /**
+ * @route   GET /api/products/recommended
+ * @desc    Get recommended products based on popularity
+ * @access  Public
+ */
+router.get('/recommended', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const page = parseInt(req.query.page, 10) || 1;
+    const result = await productService.getRecommendedProducts(limit, page);
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    errorHandler(error, req, res);
+  }
+});
+
+/**
  * @route   GET /api/products
  * @desc    Get all products with filtering and pagination
  * @access  Public
