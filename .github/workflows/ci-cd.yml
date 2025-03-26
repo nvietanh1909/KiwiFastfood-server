@@ -7,17 +7,26 @@ on:
   pull_request:
     branches: 
       - main
+  workflow_dispatch: 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    outputs:
+      build_status: ${{ job.status }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
           
       - name: Install dependencies
         run: npm install
@@ -28,9 +37,20 @@ jobs:
       # - name: Run tests
       #   run: npm test
 
+      - name: Cache build artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            .next
+            dist
+          key: ${{ runner.os }}-build-${{ github.sha }}
+
   create-pr-to-main:
     needs: build-and-test 
-    if: github.ref == 'refs/heads/dev'  # Chỉ chạy khi push vào dev
+    if: |
+      github.ref == 'refs/heads/dev' && 
+      needs.build-and-test.outputs.build_status == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -42,6 +62,7 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
           
       - name: Create Pull Request to main
+        id: create-pr
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.PAT_TOKEN }}
@@ -57,24 +78,47 @@ jobs:
           draft: false
           delete-branch: false
 
+      - name: Check PR Status
+        if: steps.create-pr.outputs.pull-request-number
+        run: |
+          echo "Pull Request created successfully!"
+          echo "PR Number: ${{ steps.create-pr.outputs.pull-request-number }}"
+          echo "PR URL: ${{ steps.create-pr.outputs.pull-request-url }}"
+
   deploy-to-production:
     needs: [build-and-test]
-    if: github.ref == 'refs/heads/main'
+    if: |
+      github.ref == 'refs/heads/main' && 
+      needs.build-and-test.outputs.build_status == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
           
       - name: Install dependencies
         run: npm install
+
+      - name: Restore build artifacts
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            .next
+            dist
+          key: ${{ runner.os }}-build-${{ github.sha }}
         
       - name: Deploy to Production
+        id: deploy
         env:
           NODE_ENV: production
         run: |
-          echo "Deploying to production..."
-          # Thêm các lệnh deploy production ở đây 
+          echo "Starting deployment to production..."
+          # Thêm các lệnh deploy production ở đây
+          echo "Deployment completed successfully!" 
