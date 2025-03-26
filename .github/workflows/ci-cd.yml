@@ -26,9 +26,32 @@ jobs:
       
     - name: Build
       run: npm run build
+
+  create-pull-request:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: main
+        title: 'Merge dev into main'
+        body: |
+          Automated pull request from dev to main
+          Changes:
+          ${{ github.event.head_commit.message }}
+        draft: false
+        delete-branch: false
       
   deploy:
-    needs: build-and-test
+    needs: [build-and-test, create-pull-request]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     
