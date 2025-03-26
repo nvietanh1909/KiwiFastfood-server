@@ -1,13 +1,12 @@
 name: CI/CD Pipeline
 
 on:
-  # Trigger khi có push vào bất kỳ nhánh nào
   push:
     branches-ignore:
-      - main  # Không trigger khi push trực tiếp vào main
+      - main 
   pull_request:
     branches: 
-      - main  # Chỉ trigger khi có PR vào main
+      - main 
 
 jobs:
   build-and-test:
@@ -31,8 +30,8 @@ jobs:
       #   run: npm test
 
   push-to-dev:
-    needs: build-and-test  # Chỉ chạy khi build-and-test thành công
-    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev'  # Chỉ chạy khi không phải push vào main hoặc dev
+    needs: build-and-test
+    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev'  # Chỉ chạy khi push từ nhánh feature
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -49,8 +48,8 @@ jobs:
           git push origin dev
 
   create-pr-to-main:
-    needs: [build-and-test, push-to-dev]  # Chỉ chạy khi cả hai job trước thành công
-    if: github.ref == 'refs/heads/dev'  # Chỉ chạy khi có thay đổi trên nhánh dev
+    needs: build-and-test 
+    if: github.ref == 'refs/heads/dev'  # Chạy khi có push vào dev
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -77,8 +76,8 @@ jobs:
           delete-branch: false
 
   deploy-to-production:
-    needs: [build-and-test]
-    if: github.ref == 'refs/heads/main'  # Chỉ deploy khi merge vào main
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'  # Chỉ deploy khi ở nhánh main
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -96,4 +95,4 @@ jobs:
           NODE_ENV: production
         run: |
           echo "Deploying to production..."
-          # Thêm các lệnh deploy production ở đây 
+          # Thêm các lệnh deploy production ở đây
