@@ -2,11 +2,13 @@ name: CI/CD Pipeline
 
 on:
   push:
+    branches:
+      - dev
     branches-ignore:
       - main 
   pull_request:
     branches: 
-      - main  
+      - main
 
 jobs:
   build-and-test:
@@ -28,33 +30,9 @@ jobs:
       # - name: Run tests
       #   run: npm test
 
-  push-to-dev:
-    needs: build-and-test 
-    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev'  # Chỉ chạy khi không phải push vào main hoặc dev
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.PAT_TOKEN }}
-          
-      - name: Push to dev branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'github-actions@github.com'
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
-          git fetch origin dev
-          git checkout -b dev origin/dev
-          git merge ${{ github.sha }} --no-ff -m "Merge changes from feature branch"
-          git push origin dev
-
   create-pr-to-main:
-    needs: [build-and-test, push-to-dev] 
-    if: github.ref == 'refs/heads/dev' 
+    needs: build-and-test 
+    if: github.ref == 'refs/heads/dev'  # Chỉ chạy khi push vào dev
     runs-on: ubuntu-latest
     permissions:
       contents: write
