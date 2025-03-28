@@ -1,10 +1,6 @@
 const { CreateOrderCommand, UpdateOrderStatusCommand, CancelOrderCommand, OrderCommandInvoker } = require('../utils/commands');
 const { eventManager, OrderNotificationObserver } = require('../utils/observer');
 
-/**
- * Facade Pattern cho các tác vụ đơn hàng phức tạp
- * Đơn giản hóa việc sử dụng kết hợp Command Pattern và Observer Pattern
- */
 class OrderFacade {
   /**
    * @param {OrderService} orderService - Order service instance

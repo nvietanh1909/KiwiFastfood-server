@@ -4,7 +4,6 @@ const { errorHandler } = require('../middleware/errorHandler');
 const container = require('../config/dependencyContainer');
 
 const router = express.Router();
-// Lấy UserService từ container thay vì import trực tiếp
 const userService = container.resolve('userService');
 
 /**
