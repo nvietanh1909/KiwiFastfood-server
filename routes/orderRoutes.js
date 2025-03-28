@@ -3,7 +3,6 @@ const { protect, authorize } = require('../middleware/auth');
 const { errorHandler } = require('../middleware/errorHandler');
 const container = require('../config/dependencyContainer');
 
-// Lấy OrderFacade từ container thay vì OrderService
 const orderFacade = container.resolve('orderFacade');
 
 const router = express.Router();
