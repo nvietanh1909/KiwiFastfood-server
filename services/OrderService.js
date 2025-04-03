@@ -138,8 +138,19 @@ class OrderService {
     }
 
     // If userId is provided, check if order belongs to user
-    if (userId && order.maKH.toString() !== userId) {
-      throw new ErrorResponse('Không có quyền truy cập đơn hàng này', 403);
+    if (userId) {
+      // Extract ID from maKH object if it's an object
+      const orderUserId = order.maKH ? 
+        (typeof order.maKH === 'object' ? order.maKH._id.toString() : order.maKH.toString()) : 
+        '';
+      const requestUserId = userId.toString();
+      
+      console.log('Order User ID:', orderUserId);
+      console.log('Request User ID:', requestUserId);
+      
+      if (orderUserId !== requestUserId) {
+        throw new ErrorResponse('Không có quyền truy cập đơn hàng này', 403);
+      }
     }
 
     return order;
